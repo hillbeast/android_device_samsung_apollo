@@ -64,8 +64,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
 
   AppendAssertions(script, input_zip)
   device_specific.FullOTA_Assertions()
-  if OPTIONS.backuptool:
-    script.RunBackup("backup")
 
   script.ShowProgress(0.5, 0)
 
@@ -99,10 +97,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
   Item.Get("system").SetPermissions(script)
 
   script.ShowProgress(0.2, 0)
-
-  if OPTIONS.backuptool:
-    script.ShowProgress(0.2, 10)
-    script.RunBackup("restore")
 
   output_zip.write(os.path.join(KERNEL_DIR, "zImage"),"zImage")
   output_zip.write(os.path.join(UTILITIES_DIR, "mke2fs"),"mke2fs")
