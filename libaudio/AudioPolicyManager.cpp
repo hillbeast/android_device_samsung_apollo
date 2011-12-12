@@ -46,7 +46,7 @@ extern "C" void destroyAudioPolicyManager(AudioPolicyInterface *interface)
 status_t AudioPolicyManager::startInput(audio_io_handle_t input)
 {
     status_t status = AudioPolicyManagerBase::startInput(input);
-
+/*
     if (status == NO_ERROR) {
         AudioInputDescriptor *inputDesc = mInputs.valueFor(input);
 
@@ -70,7 +70,7 @@ status_t AudioPolicyManager::startInput(audio_io_handle_t input)
         mpClientInterface->setParameters(input, param.toString());
 
     }
-
+*/
     return status;
 }
 
