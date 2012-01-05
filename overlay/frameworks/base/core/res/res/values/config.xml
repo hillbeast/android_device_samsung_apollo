@@ -35,8 +35,6 @@
     <!-- crespo doesn't handle this blur effect very quickly.  -->
     <bool name="config_sf_slowBlur">true</bool>
 
-    <bool name="config_automatic_brightness_available">false</bool>
-
     <!--
      The 2d accelerator can't do an alpha transformation of
              a surface with an alpha channel, so enable this special mode
@@ -64,13 +62,14 @@
          USB interfaces.  If the device doesn't want to support tething over USB this should
          be empty.  An example would be "usb.*" -->
     <string-array translatable="false" name="config_tether_usb_regexs">
-        <item>"usb\\d"</item>
+        <item>"usb0"</item>
     </string-array>
 
     <!-- Regex array of allowable upstream ifaces for tethering - for example if you want
          tethering on a new interface called "foo2" add <item>"foo\\d"</item> to the array -->
     <string-array translatable="false" name="config_tether_upstream_regexs">
         <item>"pdp\\d"</item>
+        <item>"eth\\d"</item>
     </string-array>
 
     <!-- List of regexpressions describing the interface (if any) that represent tetherable
