@@ -467,6 +467,7 @@ static int nativeToFGLPixelFormat(int format, FGLPixelFormat *fglFormat)
 	switch(format) {
 	case HAL_PIXEL_FORMAT_BGRA_8888:
 	case HAL_PIXEL_FORMAT_RGBA_8888:
+		LOGI("nativeToFGLPixelFormat : RGBA_8888");
 		bpp = 32;
 		r = 8;
 		g = 8;
@@ -474,6 +475,7 @@ static int nativeToFGLPixelFormat(int format, FGLPixelFormat *fglFormat)
 		a = 8;
 		break;
 	case HAL_PIXEL_FORMAT_RGBX_8888:
+		LOGI("nativeToFGLPixelFormat : RGBX_8888");
 		bpp = 32;
 		r = 8;
 		g = 8;
@@ -481,6 +483,7 @@ static int nativeToFGLPixelFormat(int format, FGLPixelFormat *fglFormat)
 		a = 0;
 		break;
 	case HAL_PIXEL_FORMAT_RGB_565:
+		LOGI("nativeToFGLPixelFormat : RGB_565");
 		bpp = 16;
 		r = 5;
 		g = 6;
@@ -488,6 +491,7 @@ static int nativeToFGLPixelFormat(int format, FGLPixelFormat *fglFormat)
 		a = 0;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_4444:
+		LOGI("nativeToFGLPixelFormat : RGBA_4444");
 		bpp = 16;
 		r = 4;
 		g = 4;
@@ -495,6 +499,7 @@ static int nativeToFGLPixelFormat(int format, FGLPixelFormat *fglFormat)
 		a = 4;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_5551:
+		LOGI("nativeToFGLPixelFormat : RGBA_5551");
 		bpp = 16;
 		r = 5;
 		g = 5;
@@ -995,24 +1000,31 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
 
 	switch (native_buffer->format) {
 	case HAL_PIXEL_FORMAT_RGBA_8888:
-		swapNeeded = true;
+		LOGI("RGBA_8888");
+		swapNeeded = false;
 		pixelFormat = FGPF_COLOR_MODE_8888;
 		break;
 	case HAL_PIXEL_FORMAT_RGBX_8888:
-		swapNeeded = true;
+		LOGI("RGBX_8888");
+		swapNeeded = false;
 		pixelFormat = FGPF_COLOR_MODE_0888;
 		break;
 	case HAL_PIXEL_FORMAT_BGRA_8888:
+		LOGI("BGRA_8888");
 		isARGB = true;
 		pixelFormat = FGPF_COLOR_MODE_8888;
 		break;
 	case HAL_PIXEL_FORMAT_RGB_565:
+		LOGI("RGB_565");
+		isARGB = true;
 		pixelFormat = FGPF_COLOR_MODE_565;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_5551:
+		LOGI("RGBA_5551");
 		pixelFormat = FGPF_COLOR_MODE_1555;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_4444:
+		LOGI("RGBA_4444");
 		pixelFormat = FGPF_COLOR_MODE_4444;
 		break;
 	default:
