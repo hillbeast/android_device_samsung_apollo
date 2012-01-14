@@ -59,6 +59,8 @@ PRODUCT_COPY_FILES += \
 
 # HAL libs and other system binaries
 PRODUCT_PACKAGES += \
+    gralloc.GT-I5800 \
+    libGLES_fimg \
     copybit.GT-I5800 \
     gps.GT-I5800 \
     sensors.GT-I5800 \
