@@ -46,8 +46,8 @@
 //#define GRALLOC_FB_DEBUG
 
 #ifdef GRALLOC_FB_DEBUG
-#define DEBUG_ENTER()	LOGD("Entering %s", __func__); sleep(5)
-#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__); sleep(5)
+#define DEBUG_ENTER()	LOGD("Entering %s", __func__);
+#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__);
 #else
 #define DEBUG_ENTER()
 #define DEBUG_LEAVE()
@@ -106,7 +106,7 @@ static int fb_setUpdateRect(struct framebuffer_device_t* dev,
 #endif
 
 /* HACK ALERT */
-#define FBIO_WAITFORVSYNC		_IOW ('F', 32, unsigned int)
+#define FBIO_WAITFORVSYNC		_IO ('F', 32)
 
 static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 {
@@ -137,15 +137,13 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 		if (ioctl(m->framebuffer->fd, FBIOPAN_DISPLAY, &m->info) == -1) {
 			LOGE("FBIOPAN_DISPLAY failed");
 			m->base.unlock(&m->base, buffer);
-			return 0;
+			return -errno;
 		}
 
 		// wait for VSYNC
-		unsigned int dummy; // No idea why is that, but it's required by the driver
-		if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC, &dummy) < 0) {
-			LOGE("FBIO_WAITFORVSYNC failed");
-			return 0;
-		}
+		unsigned int crtc = 0; // s3c-fb requires it to be zero
+		if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC) < 0)
+			LOGW("FBIO_WAITFORVSYNC failed");
 
 		m->currentBuffer = buffer;
 	} else {
@@ -162,13 +160,11 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 			0, 0, m->info.xres, m->info.yres,
 			&buffer_vaddr);
 
-          memcpy(fb_vaddr, buffer_vaddr, m->finfo.line_length * m->info.yres);
-
-//		s3c_g2d_copy_buffer(m->s3c_g2d_fd, buffer, 0,
-//				0, m->finfo.smem_start,
-//				m->info.xres, m->info.yres,
-//				m->fbFormat, m->info.xoffset, m->info.yoffset,
-//				m->info.width, m->info.height);
+		s3c_g2d_copy_buffer(m->s3c_g2d_fd, buffer, 0,
+				0, m->finfo.smem_start,
+				m->info.xres, m->info.yres,
+				m->fbFormat, m->info.xoffset, m->info.yoffset,
+				m->info.width, m->info.height);
 
 		m->base.unlock(&m->base, buffer);
 		m->base.unlock(&m->base, m->framebuffer);
@@ -250,7 +246,7 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	switch (info.bits_per_pixel) {
 	case 32:
 	case 24:
-		module->fbFormat = HAL_PIXEL_FORMAT_BGRA_8888; //HAL_PIXEL_FORMAT_BGRA_8888;
+		module->fbFormat = HAL_PIXEL_FORMAT_BGRA_8888;
 		break;
 	case 16:
 		module->fbFormat = HAL_PIXEL_FORMAT_RGB_565;
@@ -266,7 +262,6 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	* Request NUM_BUFFERS screens (at lest 2 for page flipping)
 	*/
 	info.yres_virtual = info.yres * NUM_BUFFERS;
-
 
 	uint32_t flags = PAGE_FLIP;
 	if (ioctl(fd, FBIOPUT_VSCREENINFO, &info) == -1) {
@@ -292,8 +287,6 @@ int mapFrameBufferLocked(struct private_module_t* module)
 				* ( info.left_margin  + info.right_margin + info.xres )
 				* info.pixclock
 			);
-	/* tom3q on 6.07.2010 - refresh rate fix for s3c6410 fb driver */
-	refreshRate *= 100;
 
 	if (refreshRate == 0) {
 		// bleagh, bad info from the driver
@@ -303,8 +296,8 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	if (int(info.width) <= 0 || int(info.height) <= 0) {
 		// the driver doesn't return that information
 		// default to 160 dpi
-		info.width  = ((info.xres * 25.4f)/120.0f + 0.5f);
-		info.height = ((info.yres * 25.4f)/120.0f + 0.5f);
+		info.width  = ((info.xres * 25.4f)/160.0f + 0.5f);
+		info.height = ((info.yres * 25.4f)/160.0f + 0.5f);
 	}
 
 	float xdpi = (info.xres * 25.4f) / info.width;
@@ -377,7 +370,7 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	module->framebuffer->base = intptr_t(vaddr);
 	memset(vaddr, 0, fbSize);
 
-	ioctl(g2d_fd, S3C_G2D_SET_BLENDING, G2D_PIXEL_ALPHA);
+//	ioctl(g2d_fd, S3C_G2D_SET_BLENDING, G2D_PIXEL_ALPHA);
 
 	DEBUG_LEAVE();
 	return 0;
@@ -477,16 +470,16 @@ s3c_g2d_copy_buffer(int s3c_g2d_fd, buffer_handle_t handle, unsigned long buffer
 
 	switch (format) {
 	case HAL_PIXEL_FORMAT_RGBA_8888:
-		fmt = G2D_RGBA_8888;
+		fmt = G2D_RGBA32;
 		break;
 	case HAL_PIXEL_FORMAT_RGBX_8888:
-		fmt = G2D_RGBX_8888;
+		fmt = G2D_RGBX32;
 		break;
 	case HAL_PIXEL_FORMAT_RGB_565:
-		fmt = G2D_RGB_565;
+		fmt = G2D_RGB16;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_5551:
-		fmt = G2D_RGBA_5551;
+		fmt = G2D_RGBA16;
 		break;
 	default:
 		LOGE("UNSUPPORTED pixel format %d, aborting.", format);
@@ -514,8 +507,8 @@ s3c_g2d_copy_buffer(int s3c_g2d_fd, buffer_handle_t handle, unsigned long buffer
 	req.src.r = req.dst.r = x + w - 1;
 	req.src.b = req.dst.b = y + h - 1;
 
-	if (ioctl(s3c_g2d_fd, S3C_G2D_BITBLT, &req))
-		LOGE("S3C_G2D_BITBLT failed = %d", -errno);
+//	if (ioctl(s3c_g2d_fd, S3C_G2D_BITBLT, &req))
+//		LOGE("S3C_G2D_BITBLT failed = %d", -errno);
 
 	DEBUG_LEAVE();
 }
