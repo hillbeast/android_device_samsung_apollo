@@ -55,13 +55,12 @@ PRODUCT_COPY_FILES += \
 
 # apns config file
 PRODUCT_COPY_FILES += \
-        vendor/cyanogen/prebuilt/common/etc/apns-conf.xml:system/etc/apns-conf.xml
+        vendor/cm/prebuilt/common/etc/apns-conf.xml:system/etc/apns-conf.xml
 
 # HAL libs and other system binaries
 PRODUCT_PACKAGES += \
     gralloc.GT-I5800 \
     libGLES_fimg \
-    copybit.GT-I5800 \
     gps.GT-I5800 \
     sensors.GT-I5800 \
     lights.GT-I5800 \
