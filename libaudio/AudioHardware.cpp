@@ -16,7 +16,7 @@
 
 #include <math.h>
 
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 
 #define LOG_TAG "AudioHardware"
 
@@ -44,7 +44,7 @@ extern "C" {
 namespace android_audio_legacy {
 
 const uint32_t AudioHardware::inputSamplingRates[] = {
-        8000, 11025, 16000, 22050, 44100, 48000
+        8000, 11025, 16000, 22050, 44100
 };
 
 //  trace driver operations for dump
@@ -88,6 +88,7 @@ AudioHardware::AudioHardware() :
     mPcmOpenCnt(0),
     mMixerOpenCnt(0),
     mInCallAudioMode(false),
+    mInputSource("Default"),
     mBluetoothNrec(true),
 #ifdef HAVE_FM_RADIO
     mFmFd(-1),
@@ -402,7 +403,6 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
             LOGD("Turning noise reduction and echo cancellation off for BT "
                  "headset");
         }
-        param.remove(String8(BT_NREC_KEY));
     }
 #ifdef HAVE_FM_RADIO
     // fm radio on
@@ -419,46 +419,8 @@ status_t AudioHardware::setParameters(const String8& keyValuePairs)
     }
     param.remove(key);
 #endif
-
     return NO_ERROR;
 }
-
-
-/*status_t AudioHardware::setParameters(const String8& keyValuePairs)
-{
-    AudioParameter param = AudioParameter(keyValuePairs);
-    String8 value;
-    String8 key;
-    const char BT_NREC_KEY[] = "bt_headset_nrec";
-    const char BT_NREC_VALUE_ON[] = "on";
-
-    key = String8(BT_NREC_KEY);
-    if (param.get(key, value) == NO_ERROR) {
-        if (value == BT_NREC_VALUE_ON) {
-            mBluetoothNrec = true;
-        } else {
-            mBluetoothNrec = false;
-            LOGD("Turning noise reduction and echo cancellation off for BT "
-                 "headset");
-        }
-    }
-#ifdef HAVE_FM_RADIO
-    // fm radio on
-    key = String8(AudioParameter::keyFmOn);
-    if (param.get(key, value) == NO_ERROR) {
-        enableFMRadio();
-    }
-    param.remove(key);
-
-    // fm radio off
-    key = String8(AudioParameter::keyFmOff);
-    if (param.get(key, value) == NO_ERROR) {
-        disableFMRadio();
-    }
-    param.remove(key);
-#endif
-    return NO_ERROR;
-}*/
 
 String8 AudioHardware::getParameters(const String8& keys)
 {
@@ -489,47 +451,8 @@ size_t AudioHardware::getInputBufferSize(uint32_t sampleRate, int format, int ch
     return AudioStreamInALSA::getBufferSize(sampleRate, channelCount);
 }
 
+
 status_t AudioHardware::setVoiceVolume(float volume)
-{
-    LOGD("### setVoiceVolume: %f", volume);
-
-    AutoMutex lock(mLock);
-
-    uint32_t device = AudioSystem::DEVICE_OUT_EARPIECE;
-    if (mOutput != 0) {
-        device = mOutput->device();
-    }
-    if (mMixer != NULL) {
-        struct mixer_ctl *ctl;
-        const char* name;
-        TRACE_DRIVER_IN(DRV_MIXER_GET)
-        switch (device) {
-            case AudioSystem::DEVICE_OUT_EARPIECE:
-                name = "Playback Volume";
-                break;
-            case AudioSystem::DEVICE_OUT_WIRED_HEADSET:
-            case AudioSystem::DEVICE_OUT_WIRED_HEADPHONE:
-                name = "Playback Headset Volume";
-                break;
-            default:
-                name = "Playback Spkr Volume";
-                break;
-        }
-        ctl= mixer_get_control(mMixer, name, 0);
-        TRACE_DRIVER_OUT
-
-        if (ctl != NULL) {
-            LOGV("setVoiceVolume() set %s to %f", name, volume);
-            TRACE_DRIVER_IN(DRV_MIXER_SET)
-            mixer_ctl_set(ctl, volume * 100);
-            TRACE_DRIVER_OUT
-        }
-    }
-
-    return NO_ERROR;
-}
-
-/*status_t AudioHardware::setVoiceVolume(float volume)
 {
     LOGD("### setVoiceVolume: %f", volume);
 
@@ -559,19 +482,8 @@ status_t AudioHardware::setVoiceVolume(float volume)
 
     return NO_ERROR;
 }
-*/
 
 status_t AudioHardware::setMasterVolume(float volume)
-{
-    LOGV("Set master volume to %f.\n", volume);
-    // We return an error code here to let the audioflinger do in-software
-    // volume on top of the maximum volume that we set through the SND API.
-    // return error - software mixer will handle it
-
-    return -1;
-}
-
-/*status_t AudioHardware::setMasterVolume(float volume)
 {
     LOGV("Set master volume to %f.\n", volume);
     // We return an error code here to let the audioflinger do in-software
@@ -594,8 +506,6 @@ status_t AudioHardware::setMasterVolume(float volume)
     closeMixer_l();
     return -1;
 }
-
-*/
 
 static const int kDumpLockRetries = 50;
 static const int kDumpLockSleep = 20000;
@@ -641,6 +551,8 @@ status_t AudioHardware::dump(int fd, const Vector<String16>& args)
     snprintf(buffer, SIZE, "\tIn Call Audio Mode %s\n",
              (mInCallAudioMode) ? "ON" : "OFF");
     result.append(buffer);
+    snprintf(buffer, SIZE, "\tInput source %s\n", mInputSource.string());
+    result.append(buffer);
     snprintf(buffer, SIZE, "\tmDriverOp: %d\n", mDriverOp);
     result.append(buffer);
 
@@ -678,7 +590,7 @@ status_t AudioHardware::setIncallPath_l(uint32_t device)
             mixer_ctl_select(ctl,router);
             TRACE_DRIVER_OUT
             //trying to fix input router
-/*            if (router == (const char *)"SPK" || router == (const char *)"RCV") {
+            if (router == (const char *)"SPK" || router == (const char *)"RCV") {
                 struct mixer_ctl *ctlMic = mixer_get_control(mMixer, "MIC Path", 0);
                 if (ctlMic != NULL ) {
                     // First set Mic Path to suitable path
@@ -696,7 +608,7 @@ status_t AudioHardware::setIncallPath_l(uint32_t device)
                         TRACE_DRIVER_OUT
                     }
                 }
-            }*/
+            }
         }
     }
     return NO_ERROR;
@@ -935,12 +847,12 @@ void AudioHardware::disableFMRadio() {
         // (the flag is automatically set by the kernel driver when FM is enabled)
         // No need to turn off the FM Radio path as the kernel driver will handle that
         TRACE_DRIVER_IN(DRV_MIXER_GET)
-        struct mixer_ctl *ctl = mixer_get_control(mMixer, "FM Radio Path", 0);
+        struct mixer_ctl *ctl = mixer_get_control(mMixer, "Codec Status", 0);
         TRACE_DRIVER_OUT
 
         if (ctl != NULL) {
             TRACE_DRIVER_IN(DRV_MIXER_SEL)
-            mixer_ctl_select(ctl, "Off");
+            mixer_ctl_select(ctl, "FMR_FLAG_CLEAR");
             TRACE_DRIVER_OUT
         }
 
@@ -965,6 +877,7 @@ status_t AudioHardware::setFMRadioPath_l(uint32_t device)
 status_t AudioHardware::setVoiceMemoPath_l(String8 path)
 {
     LOGI("setVoiceMemoPath_l() path %s", path.string());
+
 
     return NO_ERROR;
 }
@@ -1025,7 +938,7 @@ AudioHardware::AudioStreamOutALSA::~AudioStreamOutALSA()
 
 ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t bytes)
 {
-    //LOGV("AudioStreamOutALSA::write(%p, %u)", buffer, bytes);
+    LOGD("AudioStreamOutALSA::write(%p, %u)", buffer, bytes);
     status_t status = NO_INIT;
     const uint8_t* p = static_cast<const uint8_t*>(buffer);
     int ret;
@@ -1177,7 +1090,7 @@ status_t AudioHardware::AudioStreamOutALSA::open_l()
         }
     }
     
-/*    if (mHardware->mode() == AudioSystem::MODE_IN_CALL) {
+    if (mHardware->mode() == AudioSystem::MODE_IN_CALL) {
         const char *route = mHardware->getOutputRouteFromDevice(mDevices);
         LOGD("write() wakeup setting route %s", route);
         if (mRouteCtl) {
@@ -1186,7 +1099,6 @@ status_t AudioHardware::AudioStreamOutALSA::open_l()
             TRACE_DRIVER_OUT
         }
     }
-*/
 
     return NO_ERROR;
 }

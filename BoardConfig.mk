@@ -55,7 +55,9 @@ BOARD_EGL_CFG := vendor/samsung/apollo/proprietary/JPM/egl.cfg
 #BOARD_USES_COPYBIT := true
 BOARD_USE_SCREENCAP := true
 #BOARD_AVOID_DRAW_TEXTURE_EXTENSION := true
-USE_OPENGL_RENDERER := true
+
+# It needs OpenGLES 2
+#USE_OPENGL_RENDERER := true
 
 
 # GPS
