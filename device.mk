@@ -71,19 +71,13 @@ PRODUCT_PACKAGES += \
 
 # Samsung Specific tools
 PRODUCT_PACKAGES += \
-    SamsungServiceMode \
-    G3Parts
+    SamsungServiceMode
 
 PRODUCT_PACKAGES += \
     CMWallpapers \
     Pacman \
     Stk \
     Superuser
-
-# Theme packages
-PRODUCT_PACKAGES += \
-    Androidian \
-    Cyanbread 
 
 # Bluetooth MAC Address
 PRODUCT_PACKAGES += \
