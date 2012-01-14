@@ -90,8 +90,6 @@ PRODUCT_COPY_FILES += \
     device/samsung/apollo/vold.fstab:system/etc/vold.fstab \
     device/samsung/apollo/dbus.conf:system/etc/dbus.conf \
     device/samsung/apollo/recovery.fstab:recovery/root/etc/recovery.fstab \
-    device/samsung/apollo/Credits-CM.html:system/etc/Credits-CM.html
-
 
 # Live wallpaper packages
 PRODUCT_PACKAGES += \
