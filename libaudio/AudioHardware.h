@@ -150,7 +150,7 @@ private:
     uint32_t        mMixerOpenCnt;
     bool            mInCallAudioMode;
 
-    String8         mInputSource;
+    //String8         mInputSource;
     bool            mBluetoothNrec;
 
 #ifdef HAVE_FM_RADIO

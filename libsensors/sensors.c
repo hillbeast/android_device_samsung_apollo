@@ -106,10 +106,10 @@ static const struct sensor_t sSensorList[] = {
                 "The Android Open Source Project",
                 1, SENSORS_HANDLE_BASE+ID_T,
                 SENSOR_TYPE_TEMPERATURE, 80.0f, 1.0f, 0.0f, 0, { } },
-        { "GP2A proximity sensor",
+        { "GP2A Proximity sensor",
                 "Sebastien Dadier",
                 1, SENSORS_HANDLE_BASE+ID_P,
-                SENSOR_TYPE_PROXIMITY, 10.0f, 0, 0, 0, {} },
+                SENSOR_TYPE_PROXIMITY, 1.0f, 1.0f, 1.0f, 0, {} },
 };
 
 static int open_sensors(const struct hw_module_t* module, const char* name,
@@ -168,13 +168,20 @@ const struct sensors_module_t HAL_MODULE_INFO_SYM = {
 
 // conversion of acceleration data to SI units (m/s^2)
 #define CONVERT_A                   (GRAVITY_EARTH / LSG)
-#define CONVERT_A_X                 (-CONVERT_A)
-#define CONVERT_A_Y                 (CONVERT_A)
+#define CONVERT_A_X                 (CONVERT_A)
+#define CONVERT_A_Y                 (-CONVERT_A)
 #define CONVERT_A_Z                 (-CONVERT_A)
 
+
 // conversion of magnetic data to uT units
-#define CONVERT_M                   (1.0f/16.0f)
+/*#define CONVERT_M                   (1.0f/16.0f)
 #define CONVERT_M_X                 (CONVERT_M)
+#define CONVERT_M_Y                 (-CONVERT_M)
+#define CONVERT_M_Z                 (CONVERT_M)
+*/
+// conversion of magnetic data to uT units
+#define CONVERT_M                   (1.0f/1000.0f)
+#define CONVERT_M_X                 (-CONVERT_M)
 #define CONVERT_M_Y                 (-CONVERT_M)
 #define CONVERT_M_Z                 (-CONVERT_M)
 
@@ -215,7 +222,7 @@ static int open_inputs(int mode, int *akm_fd)
                 name[0] = '\0';
             }
             if (!strcmp(name, "compass")) {
-                LOGV("using %s (name=%s)", devname, name);
+                LOGD("using %s (name=%s)", devname, name);
                 *akm_fd = fd;
             }
             else
@@ -236,7 +243,7 @@ static int open_akm(struct sensors_control_context_t* dev)
 {
     if (dev->akmd_fd <= 0) {
         dev->akmd_fd = open(AKM_DEVICE_NAME, O_RDONLY);
-        //LOGD("%s, fd=%d", __PRETTY_FUNCTION__, dev->akmd_fd);
+        LOGD("%s, fd=%d", __PRETTY_FUNCTION__, dev->akmd_fd);
         LOGE_IF(dev->akmd_fd<0, "Couldn't open %s (%s)",
                 AKM_DEVICE_NAME, strerror(errno));
         if (dev->akmd_fd >= 0) {
@@ -249,7 +256,7 @@ static int open_akm(struct sensors_control_context_t* dev)
 static void close_akm(struct sensors_control_context_t* dev)
 {
     if (dev->akmd_fd > 0) {
-        LOGV("%s, fd=%d", __PRETTY_FUNCTION__, dev->akmd_fd);
+        LOGD("%s, fd=%d", __PRETTY_FUNCTION__, dev->akmd_fd);
         close(dev->akmd_fd);
         dev->akmd_fd = -1;
     }
@@ -290,15 +297,12 @@ static uint32_t enable_disable(struct sensors_control_context_t *dev,
 {
     uint32_t now_active_akm_sensors;
 
-    static int fd;
+    int fd;
 
-    if (fd == 0) {
-        LOGE("Sensors : fd = 0, opening....");
-	fd = open_akm(dev); 
-        if (fd < 0) {
-		LOGE("Sensors : cannot open device");
-        	return 0;
-	}
+  	fd = open_akm(dev); 
+    if (fd < 0) {
+				LOGE("Sensors : cannot open device");
+	    	return 0;
     }
 
     LOGV("(before) akm sensors = %08x, real = %08x",
@@ -341,8 +345,8 @@ static uint32_t enable_disable(struct sensors_control_context_t *dev,
     LOGV("(after) akm sensors = %08x, real = %08x",
          sensors, now_active_akm_sensors);
 
-    //if (!sensors)
-    //    close_akm(dev);
+    if (!sensors) 
+        close_akm(dev);
 
     return now_active_akm_sensors;
 }
@@ -395,18 +399,21 @@ static int control__activate(struct sensors_control_context_t *dev,
 
 static int control__set_delay(struct sensors_control_context_t *dev, int32_t ms)
 {
-//#ifdef ECS_IOCTL_APP_SET_DELAY
+    int ret = 0;
+
+    LOGD("control__set_delay : ms=%d, fd=%d\n", ms, dev->akmd_fd);
     if (dev->akmd_fd <= 0) {
         return -1;
     }
-    short delay = ms;
-    if (!ioctl(dev->akmd_fd, ECS_IOCTL_APP_SET_DELAY, &delay)) {
-        return -errno;
+
+    if ( ms == 1) {
+        LOGD("-> dont set delay for proximity");
+	return 0;
     }
-    return 0;
-//#else
-//    return -1;
-//#endif
+
+    short delay = ms;
+
+    return ioctl(dev->akmd_fd, ECS_IOCTL_APP_SET_DELAY, &delay);
 }
 
 static int control__wake(struct sensors_control_context_t *dev)
@@ -502,17 +509,17 @@ static uint32_t data__poll_process_akm_abs(struct sensors_data_context_t *dev,
     if (event->type == EV_ABS) {
 //        LOGI("compass type: %d code: %d value: %-5d time: %ds",
 //             event->type, event->code, event->value,
-//             (int)event->time.tv_sec);
+//           (int)event->time.tv_sec);
         switch (event->code) {
         case EVENT_TYPE_ACCEL_X:
             new_sensors |= SENSORS_ACCELERATION;
             // because of physical arrangement of BMA chip
-            dev->sensors[ID_A].acceleration.y = event->value * CONVERT_A_X;
+            dev->sensors[ID_A].acceleration.y = event->value * CONVERT_A_Y;
             break;
         case EVENT_TYPE_ACCEL_Y:
             new_sensors |= SENSORS_ACCELERATION;
             // because of physical arrangement of BMA chip
-            dev->sensors[ID_A].acceleration.x = event->value * CONVERT_A_Y;
+            dev->sensors[ID_A].acceleration.x = event->value * CONVERT_A_X;
             break;
         case EVENT_TYPE_ACCEL_Z:
             new_sensors |= SENSORS_ACCELERATION;
@@ -556,8 +563,7 @@ static uint32_t data__poll_process_akm_abs(struct sensors_data_context_t *dev,
             break;
         case EVENT_TYPE_PROXIMITY:
             new_sensors |= SENSORS_PROXIMITY;
-	    dev->sensors[ID_P].distance = event->value * PROXIMITY_THRESHOLD_GP2A;
-            LOGI("---> Proximity : value = %d    distance = %d", event->value, dev->sensors[ID_P].distance);
+	    dev->sensors[ID_P].distance = event->value;
             break;
         case EVENT_TYPE_ORIENT_STATUS: {
             // accuracy of the calibration
@@ -622,11 +628,9 @@ static int data__poll(struct sensors_data_context_t *dev, sensors_data_t* values
             nread = read(akm_fd, &event, sizeof(event));
             if (nread == sizeof(event)) {
                 new_sensors |= data__poll_process_akm_abs(dev, akm_fd, &event);
-                LOGV("akm abs %08x", new_sensors);
                 got_syn = event.type == EV_SYN;
                 exit = got_syn && event.code == SYN_CONFIG;
                 if (got_syn) {
-                    LOGV("akm syn %08x", new_sensors);
                     data__poll_process_syn(dev, &event, new_sensors);
                     new_sensors = 0;
                 }

@@ -26,8 +26,8 @@
 
 # Board
 TARGET_BOARD_PLATFORM := s5p6442
-#TARGET_CPU_ABI := armeabi-v6l
-TARGET_CPU_ABI := armeabi
+TARGET_CPU_ABI := armeabi-v6l
+#TARGET_CPU_ABI := armeabi
 TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH_VARIANT := armv6-vfp
 TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
@@ -38,27 +38,26 @@ TARGET_BOOTLOADER_BOARD_NAME := GT-I5800
 
 TARGET_OTA_ASSERT_DEVICE := apollo,GT-I5800,GT-I5801
 
-TARGET_PREBUILT_KERNEL := device/samsung/apollo/kernel.dummy
+BOARD_VENDOR_USE_AKMD := akm8973
 
 # Camera
 USE_CAMERA_STUB := false
 BOARD_USE_FROYO_LIBCAMERA := true
-#BOARD_CAMERA_USE_GETBUFFERINFO := true
-BOARD_CAMERA_LIBRARIES := libcamera 
-#USE_OVERLAY_FORMAT_YCbCr_420_SP := true
+BOARD_CAMERA_LIBRARIES := libcamera
 #BUILD_PV_VIDEO_ENCODERS := 1
 BOARD_V4L2_DEVICE := /dev/video2
 BOARD_CAMERA_DEVICE := /dev/video0
 
 # 2d/3d
-TARGET_LIBAGL_USE_GRALLOC_COPYBITS := true
-TARGET_DO_NOT_SETS_CAN_DRAW := true
-BOARD_USES_COPYBIT := true
-BOARD_NO_RGBX_8888 := true
 TARGET_BOARD_PLATFORM_GPU := fimg
+TARGET_LIBAGL_USE_GRALLOC_COPYBITS := true
 BOARD_EGL_CFG := vendor/samsung/apollo/proprietary/JPM/egl.cfg
+#BOARD_USES_COPYBIT := true
+BOARD_NO_RGBX_8888 := true
+#BOARD_NO_32BPP := true
 BOARD_USE_SCREENCAP := true
-BOARD_AVOID_DRAW_TEXTURE_EXTENSION := true
+#BOARD_AVOID_DRAW_TEXTURE_EXTENSION := true
+
 
 # GPS
 BOARD_GPS_LIBRARIES := libsecgps libsecril-client
@@ -89,21 +88,21 @@ TARGET_NO_BOOTLOADER := true
 TARGET_NO_KERNEL := true
 TARGET_NO_RADIOIMAGE := true
 
-TARGET_PROVIDES_INIT := true
-TARGET_PROVIDES_INIT_TARGET_RC := true
-TARGET_RECOVERY_INITRC := device/samsung/apollo/initramfs/init.rc
-
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
+#BOARD_FORCE_STATIC_A2DP := true
+#BT_ALT_STACK := true
+#BOARD_HAVE_BLUETOOTH_BCM := true
+#BRCM_BT_USE_BTL_IF := true
+#BRCM_BTL_INCLUDE_A2DP := true
 
+# usb
 BOARD_USE_USB_MASS_STORAGE_SWITCH := true
-TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun"
+TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
 BOARD_UMS_LUNFILE := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
 
-
-# Kernel
-TARGET_PREBUILT_KERNEL := device/samsung/apollo/kernel
+# Kernel : console=ttySAC1,115200 loglevel=4 no_console_suspend
 BOARD_KERNEL_CMDLINE := console=ttySAC1,115200 loglevel=4 no_console_suspend
 BOARD_KERNEL_BASE := 0x20000000
 BOARD_NAND_PAGE_SIZE := 4096 -s 128
@@ -114,15 +113,17 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 2013265920
 BOARD_FLASH_BLOCK_SIZE := 4096
 
 # Wifi
-WPA_SUPPLICANT_VERSION      := VER_0_5_X
 BOARD_WPA_SUPPLICANT_DRIVER := WEXT
 BOARD_WLAN_DEVICE           := bcm4329
+WPA_SUPPLICANT_VERSION      := VER_0_5_X
 WIFI_DRIVER_FW_STA_PATH     := "/system/etc/wifi/bcm4329_sta.bin"
 WIFI_DRIVER_FW_AP_PATH      := "/system/etc/wifi/bcm4329_aps.bin"
 WIFI_DRIVER_MODULE_PATH     := "/lib/modules/dhd.ko"
 WIFI_DRIVER_MODULE_ARG      := "firmware_path=/system/etc/wifi/bcm4329_sta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
 WIFI_DRIVER_MODULE_NAME     := "dhd"
-#BOARD_SOFTAP_DEVICE         := "eth0"
+#CONFIG_DRIVER_WEXT := true
+#BOARD_WEXT_NO_COMBO_SCAN := true
+#BOARD_NETWORK_INTERFACES_DIR := "/sys/devices/virtual/net"
 
 #
 BOARD_RECOVERY_IGNORE_BOOTABLES := true
@@ -151,7 +152,7 @@ BOARD_SYSTEM_FILESYSTEM := ext4
 BOARD_SYSTEM_FILESYSTEM_OPTIONS := llw,check=no
 BOARD_BML_BOOT := "/dev/block/bml5"
 BOARD_CACHE_DEVICE := /dev/block/stl8
-BOARD_CACHE_FILESYSTEM := ext2
+BOARD_CACHE_FILESYSTEM := rfs
 BOARD_CACHE_FILESYSTEM_OPTIONS := llw,check=no,nosuid,nodev
 BOARD_SDEXT_DEVICE := /dev/block/mmcblk0p2
 BOARD_SDEXT_FILESYSTEM := auto
