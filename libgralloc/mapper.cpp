@@ -341,7 +341,7 @@ int gralloc_perform(struct gralloc_module_t const* module,
 {
 	DEBUG_ENTER();
 	int res = -EINVAL;
-	va_list args;
+	/*va_list args;
 	va_start(args, operation);
 
 	switch (operation) {
@@ -373,7 +373,7 @@ int gralloc_perform(struct gralloc_module_t const* module,
 	}
 	}
 
-	va_end(args);
+	va_end(args);*/
 	DEBUG_LEAVE();
 	return res;
 }
