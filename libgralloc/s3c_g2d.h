@@ -26,6 +26,13 @@
 
 #define G2D_IOCTL_MAGIC			'G'
 
+#define S3C_G2D_ROTATOR_0		_IO(G2D_IOCTL_MAGIC,0, struct s5p_g2d_params)
+#define S3C_G2D_ROTATOR_90		_IO(G2D_IOCTL_MAGIC,1, struct s5p_g2d_params)
+#define S3C_G2D_ROTATOR_180		_IO(G2D_IOCTL_MAGIC,2, struct s5p_g2d_params)
+#define S3C_G2D_ROTATOR_270		_IO(G2D_IOCTL_MAGIC,3, struct s5p_g2d_params)
+#define S3C_G2D_ROTATOR_X_FLIP		_IO(G2D_IOCTL_MAGIC,4, struct s5p_g2d_params)
+#define S3C_G2D_ROTATOR_Y_FLIP		_IO(G2D_IOCTL_MAGIC,5, struct s5p_g2d_params)
+
 /*
  * S3C_G2D_BITBLT
  * Start hardware bitblt operation.
@@ -33,7 +40,7 @@
  * Returns:	  0 on success,
  *		< 0, on error
  */
-#define S3C_G2D_BITBLT			_IOW(G2D_IOCTL_MAGIC, 0, struct s3c_g2d_req)
+#define S3C_G2D_BITBLT			_IOW(G2D_IOCTL_MAGIC, 6, struct s3c_g2d_params)
 
 /*
  * S3C_G2D_FILLRECT
@@ -42,30 +49,15 @@
  * Returns:	  0 on success,
  *		< 0, on error
  */
-#define S3C_G2D_FILLRECT		_IOW(G2D_IOCTL_MAGIC, 8, struct s3c_g2d_fillrect)
+#define S3C_G2D_FILLRECT		_IOW(G2D_IOCTL_MAGIC, 7, struct s3c_g2d_fillrect)
 
-/*
- * S3C_G2D_SET_TRANSFORM
- * Set requested image transformation.
- * Argument:	one of G2D_ROT_* values
- */
-#define S3C_G2D_SET_TRANSFORM		_IO(G2D_IOCTL_MAGIC, 1)
-enum
-{
-	G2D_ROT_0	= 1 << 0,
-	G2D_ROT_90	= 1 << 1,
-	G2D_ROT_180	= 1 << 2,
-	G2D_ROT_270	= 1 << 3,
-	G2D_ROT_FLIP_X	= 1 << 4,
-	G2D_ROT_FLIP_Y	= 1 << 5
-};
 
 /*
  * S3C_G2D_SET_ALPHA_VAL
  * Set requested plane alpha value.
  * Argument:	a value from <0, ALPHA_VALUE_MAX> range
  */
-#define S3C_G2D_SET_ALPHA_VAL		_IO(G2D_IOCTL_MAGIC, 2)
+#define S3C_G2D_SET_ALPHA_VAL		_IO(G2D_IOCTL_MAGIC, 8)
 #define ALPHA_VALUE_MAX			255
 
 /*
@@ -73,23 +65,23 @@ enum
  * Set requested raster operation. 
  * Argument:	an 8-bit value defining the operation
  */
-#define S3C_G2D_SET_RASTER_OP		_IO(G2D_IOCTL_MAGIC, 3)
-#define G2D_ROP_SRC_ONLY		(0xf0)
-#define G2D_ROP_3RD_OPRND_ONLY		(0xaa)
-#define G2D_ROP_DST_ONLY		(0xcc)
-#define G2D_ROP_SRC_OR_DST		(0xfc)
-#define G2D_ROP_SRC_OR_3RD_OPRND	(0xfa)
-#define G2D_ROP_SRC_AND_DST		(0xc0)
-#define G2D_ROP_SRC_AND_3RD_OPRND	(0xa0)
-#define G2D_ROP_SRC_XOR_3RD_OPRND	(0x5a)
-#define G2D_ROP_DST_OR_3RD_OPRND	(0xee)
+#define S3C_G2D_SET_RASTER_OP		_IO(G2D_IOCTL_MAGIC, 9)
+#define G2D_ROP_SRC_ONLY		(0xCC)
+#define G2D_ROP_3RD_OPRND_ONLY		(0xF0)
+#define G2D_ROP_DST_ONLY		(0xAA)
+#define G2D_ROP_SRC_OR_DST		(0xEE)
+#define G2D_ROP_SRC_OR_3RD_OPRND	(0xFC)
+#define G2D_ROP_SRC_AND_DST		(0x88) 
+#define G2D_ROP_SRC_AND_3RD_OPRND	(0xC0)
+#define G2D_ROP_SRC_XOR_3RD_OPRND	(0x3C)
+#define G2D_ROP_DST_OR_3RD_OPRND	(0xFA)
 
 /*
  * S3C_G2D_SET_BLENDING
  * Set requested alpha blending mode.
  * Argument:	one of G2D_*_ALPHA values
  */
-#define S3C_G2D_SET_BLENDING		_IO(G2D_IOCTL_MAGIC, 4)
+#define S3C_G2D_SET_BLENDING		_IO(G2D_IOCTL_MAGIC, 10)
 enum
 {
 	G2D_NO_ALPHA = 0,
@@ -98,8 +90,8 @@ enum
 };
 
 /* Maximum values for the hardware */
-#define G2D_MAX_WIDTH			(2048)
-#define G2D_MAX_HEIGHT			(2048)
+#define G2D_MAX_WIDTH				(8000)
+#define G2D_MAX_HEIGHT				(8000)
 
 /* Image data */
 struct s3c_g2d_image
@@ -116,17 +108,25 @@ struct s3c_g2d_image
 	uint32_t	fmt;	// color format
 };
 
-/* Supported formats for struct s3c_g2d_image fmt field */
-enum
+typedef enum
 {
-	G2D_RGB16 = 0,
-	G2D_RGBA16,
-	G2D_ARGB16,
-	G2D_RGBA32,
-	G2D_ARGB32,
-	G2D_XRGB32,
-	G2D_RGBX32
-};
+	G2D_RGBA_8888 = 1,
+	G2D_RGBX_8888 = 2,
+	G2D_ARGB_8888 = 3,
+	G2D_XRGB_8888 = 4,
+	G2D_BGRA_8888 = 5,
+	G2D_BGRX_8888 = 6,
+	G2D_ABGR_8888 = 7,
+	G2D_XBGR_8888 = 8,
+	G2D_RGB_888   = 9,
+	G2D_BGR_888   = 10,
+	G2D_RGB_565   = 11,
+	G2D_BGR_565   = 12,
+	G2D_RGBA_5551 = 13,
+	G2D_ARGB_5551 = 14,
+	G2D_RGBA_4444 = 15,
+	G2D_ARGB_4444 = 16
+} G2D_COLOR_FMT;
 
 /* Bitblt request */
 struct s3c_g2d_req
@@ -142,5 +142,50 @@ struct s3c_g2d_fillrect
 	uint32_t color;
 	uint8_t alpha;
 };
+
+typedef struct
+{
+	uint32_t	src_base_addr;          //Base address of the source image
+	uint32_t	src_full_width;         //source image full width
+	uint32_t	src_full_height;        //source image full height
+	uint32_t	src_start_x;            //coordinate start x of source image
+	uint32_t	src_start_y;            //coordinate start y of source image
+	uint32_t	src_work_width;         //source image width for work
+	uint32_t src_work_height;        //source image height for work
+	G2D_COLOR_FMT src_colorfmt; //source color format
+	uint32_t src_select;             //source selection
+
+	uint32_t	dst_base_addr;          //Base address of the destination image	
+	uint32_t	dst_full_width;         //destination screen full width
+	uint32_t	dst_full_height;        //destination screen full width
+	uint32_t	dst_start_x;            //coordinate start x of destination screen
+	uint32_t	dst_start_y;            //coordinate start y of destination screen
+	uint32_t	dst_work_width;         //destination screen width for work
+	uint32_t dst_work_height;        //destination screen height for work
+	G2D_COLOR_FMT dst_colorfmt; //destination color format
+	uint32_t dst_select;             //destination selection
+
+	// Coordinate (X, Y) of clipping window
+	uint32_t  cw_x1, cw_y1;
+	uint32_t  cw_x2, cw_y2;
+
+	uint32_t  color_val[8];
+	uint32_t FGColor;                //Foreground Color
+	uint32_t BGColor;                //Background Color
+	uint32_t BSCOlor;                //BlueScreen Color
+	//ROP 
+	uint32_t Masked_select;          //THIRD_OPERAND
+	uint32_t UnMasked_select;
+	uint32_t MaskedROP3;             //Raster Operation Value
+	uint32_t UnMaskedROP3;
+	uint32_t transparent_mode;
+
+	uint32_t	alpha_mode;             //true : enable, false : disable
+	uint32_t	alpha_val;
+	uint32_t fading_offset;
+	uint32_t	color_key_mode;         //true : enable, false : disable
+	uint32_t	color_key_val;          //transparent color value
+
+}s5p_g2d_params;
 
 #endif

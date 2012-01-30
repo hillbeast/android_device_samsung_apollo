@@ -46,8 +46,8 @@
 //#define GRALLOC_FB_DEBUG
 
 #ifdef GRALLOC_FB_DEBUG
-#define DEBUG_ENTER()	LOGD("Entering %s", __func__);
-#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__);
+#define DEBUG_ENTER()	LOGD("Entering %s", __func__); sleep(5)
+#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__); sleep(5)
 #else
 #define DEBUG_ENTER()
 #define DEBUG_LEAVE()
@@ -137,13 +137,15 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 		if (ioctl(m->framebuffer->fd, FBIOPAN_DISPLAY, &m->info) == -1) {
 			LOGE("FBIOPAN_DISPLAY failed");
 			m->base.unlock(&m->base, buffer);
-			return -errno;
+			return 0;
 		}
 
 		// wait for VSYNC
-		unsigned int crtc = 0; // s3c-fb requires it to be zero
-		if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC) < 0)
-			LOGW("FBIO_WAITFORVSYNC failed");
+		unsigned int dummy; // No idea why is that, but it's required by the driver
+		if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC) < 0) {
+			LOGE("FBIO_WAITFORVSYNC failed");
+			return 0;
+		}
 
 		m->currentBuffer = buffer;
 	} else {
@@ -160,11 +162,13 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 			0, 0, m->info.xres, m->info.yres,
 			&buffer_vaddr);
 
-		s3c_g2d_copy_buffer(m->s3c_g2d_fd, buffer, 0,
-				0, m->finfo.smem_start,
-				m->info.xres, m->info.yres,
-				m->fbFormat, m->info.xoffset, m->info.yoffset,
-				m->info.width, m->info.height);
+          memcpy(fb_vaddr, buffer_vaddr, m->finfo.line_length * m->info.yres);
+
+//		s3c_g2d_copy_buffer(m->s3c_g2d_fd, buffer, 0,
+//				0, m->finfo.smem_start,
+//				m->info.xres, m->info.yres,
+//				m->fbFormat, m->info.xoffset, m->info.yoffset,
+//				m->info.width, m->info.height);
 
 		m->base.unlock(&m->base, buffer);
 		m->base.unlock(&m->base, m->framebuffer);
@@ -176,14 +180,19 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 
 static int fb_compositionComplete(struct framebuffer_device_t* dev)
 {
-	DEBUG_ENTER();
 	// TODO: Properly implement composition complete callback
 	glFinish();
 
-	DEBUG_LEAVE();
 	return 0;
 }
 
+/*int compositionComplete(struct framebuffer_device_t* dev)
+{
+	unsigned char pixels[4];
+	glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	/* The return value is not clear, but at least it is not checked. */
+/*	return 0;
+}*/
 /*****************************************************************************/
 
 //#define FORCE_24BPP
@@ -246,7 +255,7 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	switch (info.bits_per_pixel) {
 	case 32:
 	case 24:
-		module->fbFormat = HAL_PIXEL_FORMAT_BGRA_8888;
+		module->fbFormat = HAL_PIXEL_FORMAT_BGRA_8888; //HAL_PIXEL_FORMAT_BGRA_8888;
 		break;
 	case 16:
 		module->fbFormat = HAL_PIXEL_FORMAT_RGB_565;
@@ -262,6 +271,7 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	* Request NUM_BUFFERS screens (at lest 2 for page flipping)
 	*/
 	info.yres_virtual = info.yres * NUM_BUFFERS;
+
 
 	uint32_t flags = PAGE_FLIP;
 	if (ioctl(fd, FBIOPUT_VSCREENINFO, &info) == -1) {
@@ -287,6 +297,8 @@ int mapFrameBufferLocked(struct private_module_t* module)
 				* ( info.left_margin  + info.right_margin + info.xres )
 				* info.pixclock
 			);
+	/* tom3q on 6.07.2010 - refresh rate fix for s3c6410 fb driver */
+	refreshRate *= 100;
 
 	if (refreshRate == 0) {
 		// bleagh, bad info from the driver
@@ -296,8 +308,8 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	if (int(info.width) <= 0 || int(info.height) <= 0) {
 		// the driver doesn't return that information
 		// default to 160 dpi
-		info.width  = ((info.xres * 25.4f)/160.0f + 0.5f);
-		info.height = ((info.yres * 25.4f)/160.0f + 0.5f);
+		info.width  = ((info.xres * 25.4f)/120.0f + 0.5f);
+		info.height = ((info.yres * 25.4f)/120.0f + 0.5f);
 	}
 
 	float xdpi = (info.xres * 25.4f) / info.width;
@@ -370,7 +382,7 @@ int mapFrameBufferLocked(struct private_module_t* module)
 	module->framebuffer->base = intptr_t(vaddr);
 	memset(vaddr, 0, fbSize);
 
-//	ioctl(g2d_fd, S3C_G2D_SET_BLENDING, G2D_PIXEL_ALPHA);
+	ioctl(g2d_fd, S3C_G2D_SET_BLENDING, G2D_PIXEL_ALPHA);
 
 	DEBUG_LEAVE();
 	return 0;
@@ -433,6 +445,7 @@ int fb_device_open(hw_module_t const* module, const char* name,
 			const_cast<uint32_t&>(dev->device.height) = m->info.yres;
 			const_cast<int&>(dev->device.stride) = stride;
 			const_cast<int&>(dev->device.format) = m->fbFormat;
+			//const_cast<int&>(dev->device.format) = HAL_PIXEL_FORMAT_RGBA_8888;
 			const_cast<float&>(dev->device.xdpi) = m->xdpi;
 			const_cast<float&>(dev->device.ydpi) = m->ydpi;
 			const_cast<float&>(dev->device.fps) = m->fps;
@@ -453,7 +466,7 @@ int fb_device_open(hw_module_t const* module, const char* name,
 }
 
 /* Copy a pmem buffer to the framebuffer */
-
+/*
 static void
 s3c_g2d_copy_buffer(int s3c_g2d_fd, buffer_handle_t handle, unsigned long buffer_base,
 		int fd, unsigned long fb_base,
@@ -470,16 +483,16 @@ s3c_g2d_copy_buffer(int s3c_g2d_fd, buffer_handle_t handle, unsigned long buffer
 
 	switch (format) {
 	case HAL_PIXEL_FORMAT_RGBA_8888:
-		fmt = G2D_RGBA32;
+		fmt = G2D_RGBA_8888;
 		break;
 	case HAL_PIXEL_FORMAT_RGBX_8888:
-		fmt = G2D_RGBX32;
+		fmt = G2D_RGBX_8888;
 		break;
 	case HAL_PIXEL_FORMAT_RGB_565:
-		fmt = G2D_RGB16;
+		fmt = G2D_RGB_565;
 		break;
 	case HAL_PIXEL_FORMAT_RGBA_5551:
-		fmt = G2D_RGBA16;
+		fmt = G2D_RGBA_5551;
 		break;
 	default:
 		LOGE("UNSUPPORTED pixel format %d, aborting.", format);
@@ -507,8 +520,8 @@ s3c_g2d_copy_buffer(int s3c_g2d_fd, buffer_handle_t handle, unsigned long buffer
 	req.src.r = req.dst.r = x + w - 1;
 	req.src.b = req.dst.b = y + h - 1;
 
-//	if (ioctl(s3c_g2d_fd, S3C_G2D_BITBLT, &req))
-//		LOGE("S3C_G2D_BITBLT failed = %d", -errno);
+	if (ioctl(s3c_g2d_fd, S3C_G2D_BITBLT, &req))
+		LOGE("S3C_G2D_BITBLT failed = %d", -errno);
 
 	DEBUG_LEAVE();
-}
+}*/

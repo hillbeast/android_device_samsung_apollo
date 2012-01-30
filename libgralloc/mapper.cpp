@@ -39,8 +39,8 @@
 //#define GRALLOC_MAPPER_DEBUG
 
 #ifdef GRALLOC_MAPPER_DEBUG
-#define DEBUG_ENTER()	LOGD("Entering %s", __func__);
-#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__);
+#define DEBUG_ENTER()	LOGD("Entering %s", __func__); sleep(5)
+#define DEBUG_LEAVE()	LOGD("Leaving %s", __func__); sleep(5)
 #else
 #define DEBUG_ENTER()
 #define DEBUG_LEAVE()
@@ -341,7 +341,7 @@ int gralloc_perform(struct gralloc_module_t const* module,
 {
 	DEBUG_ENTER();
 	int res = -EINVAL;
-	/*va_list args;
+	va_list args;
 	va_start(args, operation);
 
 	switch (operation) {
@@ -373,7 +373,7 @@ int gralloc_perform(struct gralloc_module_t const* module,
 	}
 	}
 
-	va_end(args);*/
+	va_end(args);
 	DEBUG_LEAVE();
 	return res;
 }
