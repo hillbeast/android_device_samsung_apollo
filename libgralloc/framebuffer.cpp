@@ -106,6 +106,10 @@ static int fb_setUpdateRect(struct framebuffer_device_t* dev,
 #endif
 
 /* HACK ALERT */
+#ifdef FBIO_WAITFORVSYNC
+#undef FBIO_WAITFORVSYNC
+#endif
+
 #define FBIO_WAITFORVSYNC		_IO ('F', 32)
 
 static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
