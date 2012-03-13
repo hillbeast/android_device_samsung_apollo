@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/fglimage.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -28,17 +28,20 @@ struct FGLImage {
 #define FGL_IMAGE_MAGIC 0x00474d49
 	uint32_t magic;
 	uint32_t pixelFormat;
-	uint32_t stride;
+	uint32_t width;
 	uint32_t height;
 	void *buffer;
 	FGLSurface *surface;
-	bool swapNeeded;
-	bool isARGB;
 	bool terminated;
 	uint32_t refCount;
 
-	FGLImage() : magic(FGL_IMAGE_MAGIC), buffer(0), surface(0),
-					terminated(false), refCount(0) {}
+	FGLImage() :
+		magic(FGL_IMAGE_MAGIC),
+		buffer(0),
+		surface(0),
+		terminated(false),
+		refCount(0) {}
+
 	virtual ~FGLImage() {}
 
 	bool isValid()

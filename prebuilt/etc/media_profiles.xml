@@ -81,26 +81,26 @@
 
         <EncoderProfile quality="high" fileFormat="mp4" duration="60">
             <Video codec="m4v"
-                   bitRate="3000000"
-                   width="720"
-                   height="480"
-                   frameRate="24" />
+                   bitRate="767000"
+                   width="320"
+                   height="240"
+                   frameRate="15" />
 
             <Audio codec="amrnb"
-                   bitRate="12200"
+                   bitRate="23450"
                    sampleRate="8000"
                    channels="1" />
         </EncoderProfile>
 
         <EncoderProfile quality="low" fileFormat="3gp" duration="30">
             <Video codec="m4v"
-                   bitRate="256000"
+                   bitRate="161000"
                    width="176"
                    height="144"
                    frameRate="15" />
 
             <Audio codec="amrnb"
-                   bitRate="12200"
+                   bitRate="23450"
                    sampleRate="8000"
                    channels="1" />
 
@@ -125,25 +125,25 @@
          or query the capabilities of the codec at all if it is disabled
     -->
     <VideoEncoderCap name="h264" enabled="true"
-        minBitRate="64000" maxBitRate="12000000"
-        minFrameWidth="176" maxFrameWidth="1280"
-        minFrameHeight="144" maxFrameHeight="720"
-        minFrameRate="1" maxFrameRate="30" />
+        minBitRate="96100" maxBitRate="12000000"
+        minFrameWidth="176" maxFrameWidth="320"
+        minFrameHeight="144" maxFrameHeight="240"
+        minFrameRate="1" maxFrameRate="15" />
 
     <VideoEncoderCap name="h263" enabled="true"
-        minBitRate="64000" maxBitRate="1000000"
-        minFrameWidth="176" maxFrameWidth="800"
-        minFrameHeight="144" maxFrameHeight="480"
-        minFrameRate="1" maxFrameRate="24" />
+        minBitRate="96100" maxBitRate="12000000"
+        minFrameWidth="176" maxFrameWidth="320"
+        minFrameHeight="144" maxFrameHeight="240"
+        minFrameRate="1" maxFrameRate="15" />
 
     <VideoEncoderCap name="m4v" enabled="true"
-        minBitRate="64000" maxBitRate="2000000"
-        minFrameWidth="176" maxFrameWidth="800"
-        minFrameHeight="144" maxFrameHeight="480"
-        minFrameRate="1" maxFrameRate="24" />
+        minBitRate="96100" maxBitRate="12000000"
+        minFrameWidth="176" maxFrameWidth="320"
+        minFrameHeight="144" maxFrameHeight="240"
+        minFrameRate="1" maxFrameRate="15" />
 
     <AudioEncoderCap name="amrnb" enabled="true"
-        minBitRate="5525" maxBitRate="12200"
+        minBitRate="5525" maxBitRate="23450"
         minSampleRate="8000" maxSampleRate="8000"
         minChannels="1" maxChannels="1" />
 

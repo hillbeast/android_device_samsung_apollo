@@ -56,11 +56,12 @@ void fimgSetScissorParams(fimgContext *ctx,
 			  unsigned int xMax, unsigned int xMin,
 			  unsigned int yMax, unsigned int yMin)
 {
-#ifdef FIMG_COORD_FLIP_Y
-	unsigned int tmp = ctx->fbHeight - yMax;
-	yMax = ctx->fbHeight - yMin;
-	yMin = tmp;
-#endif
+	if (ctx->flipY) {
+		unsigned int tmp = ctx->fbHeight - yMax;
+		yMax = ctx->fbHeight - yMin;
+		yMin = tmp;
+	}
+
 	ctx->fragment.scY.max = yMax;
 	ctx->fragment.scY.min = yMin;
 	fimgQueue(ctx, ctx->fragment.scY.val, FGPF_SCISSOR_Y);
@@ -372,12 +373,9 @@ void fimgSetLogicalOpEnable(fimgContext *ctx, int enable)
 *		[IN] b - whether blue can or cannot be written into the frame buffer.
 *		[IN] a - whether alpha can or cannot be written into the frame buffer.
 *****************************************************************************/
-void fimgSetColorBufWriteMask(fimgContext *ctx, int r, int g, int b, int a)
+void fimgSetColorBufWriteMask(fimgContext *ctx, unsigned int mask)
 {
-	ctx->fragment.mask.r = !r;
-	ctx->fragment.mask.g = !g;
-	ctx->fragment.mask.b = !b;
-	ctx->fragment.mask.a = !a;
+	ctx->fragment.mask.val = mask & 0xf;
 	fimgQueue(ctx, ctx->fragment.mask.val, FGPF_CBMSK);
 }
 
@@ -422,13 +420,17 @@ void fimgSetZBufWriteMask(fimgContext *ctx, int enable)
 *		[IN] format - specifies the format used for the frame buffer.
 *****************************************************************************/
 void fimgSetFrameBufParams(fimgContext *ctx,
-			   int opaqueAlpha, unsigned int thresholdAlpha,
-			   unsigned int constAlpha, fimgColorMode format)
+				unsigned int flags, unsigned int format)
 {
-	ctx->fragment.fbctl.opaque = !!opaqueAlpha;
-	ctx->fragment.fbctl.alphathreshold = thresholdAlpha;
-	ctx->fragment.fbctl.alphaconst = constAlpha;
+	ctx->fragment.fbctl.opaque = 0;
+	ctx->fragment.fbctl.alphathreshold = 0;
+	ctx->fragment.fbctl.alphaconst = 255;
 	ctx->fragment.fbctl.colormode = format;
+#ifdef FIMG_FIXED_PIPELINE
+	FGFP_BITFIELD_SET(ctx->compat.psState.ps,
+			PS_SWAP, !!(flags & FGPF_COLOR_MODE_BGR));
+#endif
+	ctx->fbFlags = flags;
 	fimgQueue(ctx, ctx->fragment.fbctl.val, FGPF_FBCTL);
 }
 
@@ -462,10 +464,11 @@ void fimgSetColorBufBaseAddr(fimgContext *ctx, unsigned int addr)
 *		[IN] height -specifies the value used for frame buffer height
 *****************************************************************************/
 void fimgSetFrameBufSize(fimgContext *ctx,
-				unsigned int width, unsigned int height)
+			unsigned int width, unsigned int height, int flipY)
 {
 	ctx->fragment.bufWidth = width;
 	ctx->fbHeight = height;
+	ctx->flipY = flipY;
 	fimgQueue(ctx, width, FGPF_FBW);
 }
 

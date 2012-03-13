@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/common.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -27,6 +27,8 @@
 #define FGL_MAX_TEXTURE_UNITS		2
 #define FGL_MAX_TEXTURE_OBJECTS		1024
 #define FGL_MAX_BUFFER_OBJECTS		1024
+#define FGL_MAX_FRAMEBUFFER_OBJECTS	1024
+#define FGL_MAX_RENDERBUFFER_OBJECTS	1024
 #define FGL_MAX_MIPMAP_LEVEL		11
 #define FGL_MAX_LIGHTS			8
 #define FGL_MAX_CLIP_PLANES		1
@@ -75,6 +77,9 @@ public:
 #undef NELEM
 #define NELEM(x) (sizeof(x)/sizeof(*(x)))
 
+#define BIT_MASK(x)	((1UL << (x)) - 1)
+#define BIT_VAL(x)	(1UL << (x))
+
 template<typename T>
 static inline T max(T a, T b)
 {
@@ -99,6 +104,23 @@ static inline T clamp(T v, T l, T h)
 	if (v < l)
 		v = l;
 	return v;
+}
+
+template<typename T>
+static int binarySearch(const T sortedArray[], int first, int last, EGLint key)
+{
+	while (first <= last) {
+		int mid = (first + last) / 2;
+
+		if (key > sortedArray[mid].key)
+			first = mid + 1;
+		else if (key < sortedArray[mid].key)
+			last = mid - 1;
+		else
+			return mid;
+	}
+
+	return -1;
 }
 
 #endif // _LIBSGL_COMMON_H_

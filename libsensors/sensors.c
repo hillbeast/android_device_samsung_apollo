@@ -174,16 +174,10 @@ const struct sensors_module_t HAL_MODULE_INFO_SYM = {
 
 
 // conversion of magnetic data to uT units
-/*#define CONVERT_M                   (1.0f/16.0f)
+#define CONVERT_M                   (1.0f/16.0f)
 #define CONVERT_M_X                 (CONVERT_M)
 #define CONVERT_M_Y                 (-CONVERT_M)
 #define CONVERT_M_Z                 (CONVERT_M)
-*/
-// conversion of magnetic data to uT units
-#define CONVERT_M                   (1.0f/1000.0f)
-#define CONVERT_M_X                 (-CONVERT_M)
-#define CONVERT_M_Y                 (-CONVERT_M)
-#define CONVERT_M_Z                 (-CONVERT_M)
 
 #define CONVERT_O                   (1.0f/64.0f)
 #define CONVERT_O_A                 (CONVERT_O)

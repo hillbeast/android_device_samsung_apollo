@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/types.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -154,14 +154,5 @@ static inline GLint round(GLfloat f)
 {
 	return (f > 0.0f) ? floor(f + 0.5f) : ceil(f - 0.5f);
 }
-
-typedef unsigned char FGLubyte;
-typedef signed char FGLbyte;
-typedef unsigned short FGLushort;
-typedef signed short FGLshort;
-typedef unsigned int FGLuint;
-typedef signed int FGLint;
-
-#define FGL_NO_ERROR	0
 
 #endif // _LIBSGL_TYPES_H_

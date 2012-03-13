@@ -64,9 +64,6 @@ label start
 
 # Texture 0
 	texld r1, v1, s0
-	bf noswap0, b0
-	mov r1.xyzw, r1.wzyx
-label noswap0
 	mov r2, c4
 	mov r3, c5
 
@@ -78,11 +75,19 @@ label noswap0
 
 # Texture 1
 	texld r1, v2, s1
-	bf noswap1, b1
-	mov r1.xyzw, r1.wzyx
-label noswap1
 	mov r2, c6
 	mov r3, c7
+
+% f tex_swap
+
+# Texture BGR -> RGB color component swap
+#
+# Input:	r1 - BGR texture value
+#
+# Ouput:	r1 - RGB texture value
+
+# Swap
+	mov r1.xyzw, r1.zyxw
 
 ################################################################################
 
@@ -192,7 +197,7 @@ label noswap1
 	# Here go argument modifier functions for color combiner
 	# Here goes combine function for color combiner
 
-	mul_sat r0.xyz, r4, r3
+	mul r0.xyz, r4, r3
 
 % f combine_a
 
@@ -210,7 +215,7 @@ label noswap1
 	# Here go argument modifier functions for alpha combiner
 	# Here goes combine function for alpha combiner
 
-	mul_sat r0.w, r4, r3
+	mul r0.w, r4, r3
 
 % f combine_uni
 
@@ -228,7 +233,7 @@ label noswap1
 	# Here go argument modifier functions for unified combiner
 	# Here goes combine function for unified combiner
 
-	mul_sat r0, r4, r3
+	mul r0, r4, r3
 
 ################################################################################
 
@@ -606,9 +611,9 @@ label noswap1
 # Output:	r4 - result
 
 # Interpolate
-	mul r4, r4, r6
+	mul r7, r4, r6
 	add r6, c1, -r6
-	mad r4, r5, r6, r4
+	mad r4, r5, r6, r7
 
 % f combine_subtract
 
@@ -641,20 +646,21 @@ label noswap1
 
 ################################################################################
 
+% f out_swap
+
+# Output RGB -> BGR color component swap
+#
+# Inputs:	r0 - fragment color
+#
+# Outputs:	r0 - swapped fragment color
+
+# Swap
+	mov r0.xyzw, r0.zyxw
+
 % f footer
 
 # Shader footer
 	# Emit the pixel
-	mov oColor, r0
-	# Return
-	ret
-
-################################################################################
-
-% f clear
-
-# Shader for glClear
-	mov_sat oColor, c255
-	ret
+	mov_sat oColor, r0
 
 # End of shader code

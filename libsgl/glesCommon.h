@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/glesCommon.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -22,9 +22,12 @@
 #ifndef _GLESCOMMON_H_
 #define _GLESCOMMON_H_
 
+#include <cassert>
+
 #include "platform.h"
 #include "state.h"
 #include "types.h"
+#include "fglpixelformat.h"
 
 static inline GLint unitFromTextureEnum(GLenum texture)
 {
@@ -64,7 +67,7 @@ static inline GLint unitFromTextureEnum(GLenum texture)
 	return unit;
 }
 
-/**
+/*
 	Context management
 */
 
@@ -87,7 +90,7 @@ static inline FGLContext *getContext(void)
 	return ctx;
 }
 
-/**
+/*
 	Error handling
 */
 
@@ -120,25 +123,5 @@ static inline void setError(GLenum error)
 	if(errorCode == GL_NO_ERROR)
 		errorCode = error;
 }
-
-struct FGLColorConfigDesc {
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
-	uint8_t alpha;
-	GLenum readType;
-	GLenum readFormat;
-	GLint pixelSize;
-	uint8_t redPos;
-	uint8_t greenPos;
-	uint8_t bluePos;
-	uint8_t alphaPos;
-	GLboolean opaque;
-	GLint texFormat;
-};
-
-extern const FGLColorConfigDesc fglColorConfigs[];
-extern const FGLColorConfigDesc *fglGetColorConfigDesc(unsigned int format);
-extern void fglCleanTextureObjects(FGLContext *ctx);
 
 #endif

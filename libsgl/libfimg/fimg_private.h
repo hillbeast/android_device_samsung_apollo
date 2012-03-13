@@ -361,7 +361,8 @@ struct _fimgTexture {
 	unsigned int minLevel;
 	unsigned int maxLevel;
 	unsigned int baseAddr;
-	unsigned int padding[2];
+	unsigned int reserved1;
+	unsigned int reserved2;
 };
 
 /*
@@ -443,37 +444,113 @@ void fimgRestoreFragmentState(fimgContext *ctx);
 
 #ifdef FIMG_FIXED_PIPELINE
 
-typedef struct {
-	fimgCombArgSrc src;
-	fimgCombArgMod mod;
-} fimgCombArg;
+#define FGFP_BITFIELD_GET(reg, name)		\
+	(((reg) & FGFP_ ## name ## _MASK) >> FGFP_ ## name ## _SHIFT)
+#define FGFP_BITFIELD_GET_IDX(reg, name, idx)		\
+	(((reg) & FGFP_ ## name ## _MASK((idx))) >> FGFP_ ## name ## _SHIFT((idx)))
+
+#define FGFP_BITFIELD_SET(reg, name, val)	do {\
+		reg &= ~(FGFP_ ## name ## _MASK); \
+		reg |= (val) << FGFP_ ## name ## _SHIFT; \
+	} while (0);
+#define FGFP_BITFIELD_SET_IDX(reg, name, idx, val)	do {\
+		reg &= ~(FGFP_ ## name ## _MASK((idx))); \
+		reg |= (val) << FGFP_ ## name ## _SHIFT((idx)); \
+	} while (0);
+
+#define FGFP_TEX_MODE_SHIFT		(0)
+#define FGFP_TEX_MODE_MASK		(0x7 << 0)
+#define FGFP_TEX_SWAP_SHIFT		(3)
+#define FGFP_TEX_SWAP_MASK		(0x1 << 3)
+#define FGFP_TEX_COMBC_SRC_SHIFT(i)	(4 + 4*(i))
+#define FGFP_TEX_COMBC_SRC_MASK(i)	(0x3 << (4 + 4*(i)))
+#define FGFP_TEX_COMBC_MOD_SHIFT(i)	(6 + 4*(i))
+#define FGFP_TEX_COMBC_MOD_MASK(i)	(0x3 << (6 + 4*(i)))
+#define FGFP_TEX_COMBC_FUNC_SHIFT	(16)
+#define FGFP_TEX_COMBC_FUNC_MASK	(0x7 << 16)
+#define FGFP_TEX_COMBA_SRC_SHIFT(i)	(19 + 3*(i))
+#define FGFP_TEX_COMBA_SRC_MASK(i)	(0x3 << (19 + 3*(i)))
+#define FGFP_TEX_COMBA_MOD_SHIFT(i)	(21 + 3*(i))
+#define FGFP_TEX_COMBA_MOD_MASK(i)	(0x1 << (21 + 3*(i)))
+#define FGFP_TEX_COMBA_FUNC_SHIFT	(28)
+#define FGFP_TEX_COMBA_FUNC_MASK	(0x7 << 28)
+#define FGFP_PS_SWAP_SHIFT		(0)
+#define FGFP_PS_SWAP_MASK		(0x1 << 0)
+#define FGFP_PS_INVALID_SHIFT		(31)
+#define FGFP_PS_INVALID_MASK		(0x1 << 31)
+
+typedef union _fimgPixelShaderState {
+	uint32_t val[FIMG_NUM_TEXTURE_UNITS + 1];
+	struct {
+		uint32_t tex[FIMG_NUM_TEXTURE_UNITS];
+		uint32_t ps;
+	};
+} fimgPixelShaderState;
+
+#define FGFP_VS_TEX_EN_SHIFT(i)		(i)
+#define FGFP_VS_TEX_EN_MASK(i)		(0x1 << (i))
+#define FGFP_VS_INVALID_SHIFT		(31)
+#define FGFP_VS_INVALID_MASK		(0x1 << 31)
+
+typedef union _fimgVertexShaderState {
+	uint32_t val[1];
+	struct {
+		uint32_t vs;
+	};
+} fimgVertexShaderState;
 
 typedef struct {
-	fimgCombFunc func;
-	fimgCombArg arg[3];
-} fimgCombiner;
-
-typedef struct {
-	int enabled;
 	int dirty;
-	fimgTexFunc func;
-	fimgCombiner combc;
-	fimgCombiner comba;
 	float env[4];
 	float scale[4];
 	fimgTexture *texture;
-	int swap;
 } fimgTextureCompat;
 
+typedef struct fimgPixelShaderProgram {
+	uint32_t instrCount;
+	fimgPixelShaderState state;
+} fimgPixelShaderProgram;
+
+typedef struct fimgVertexShaderProgram {
+	uint32_t instrCount;
+	fimgVertexShaderState state;
+} fimgVertexShaderProgram;
+
+#define VS_CACHE_SIZE	4
+#define PS_CACHE_SIZE	8
+
 typedef struct {
-	int vsDirty;
-	uint32_t vshaderEnd;
-	int psDirty;
-	uint32_t pshaderEnd;
-	fimgTextureCompat texture[FIMG_NUM_TEXTURE_UNITS];
-	int matrixDirty[2 + FIMG_NUM_TEXTURE_UNITS];
-	const float *matrix[2 + FIMG_NUM_TEXTURE_UNITS];
-	/* More to come */
+	uint32_t		*vshaderBuf;
+	int			vshaderLoaded;
+	uint32_t		curVsNum;
+	uint32_t		vsEvictCounter;
+	fimgVertexShaderState	vsState;
+	fimgVertexShaderProgram	vertexShaders[VS_CACHE_SIZE];
+#ifdef FIMG_SHADER_CACHE_STATS
+	uint8_t			vsMisses;
+	uint8_t			vsSameHits;
+	uint8_t			vsCacheHits;
+	uint8_t			vsStatsCounter;
+#endif
+
+	uint32_t		*pshaderBuf;
+	int			pshaderLoaded;
+	uint32_t		curPsNum;
+	uint32_t		psEvictCounter;
+	uint32_t		psMask[FIMG_NUM_TEXTURE_UNITS + 1];
+	fimgPixelShaderState	psState;
+	fimgPixelShaderProgram	pixelShaders[PS_CACHE_SIZE];
+#ifdef FIMG_SHADER_CACHE_STATS
+	uint8_t			psMisses;
+	uint8_t			psSameHits;
+	uint8_t			psCacheHits;
+	uint8_t			psStatsCounter;
+#endif
+
+	fimgTextureCompat	texture[FIMG_NUM_TEXTURE_UNITS];
+
+	int			matrixDirty[2 + FIMG_NUM_TEXTURE_UNITS];
+	const float		*matrix[2 + FIMG_NUM_TEXTURE_UNITS];
 } fimgCompatContext;
 
 void fimgCreateCompatContext(fimgContext *ctx);
@@ -481,12 +558,6 @@ void fimgRestoreCompatState(fimgContext *ctx);
 void fimgCompatFlush(fimgContext *ctx);
 
 #endif
-
-typedef struct {
-	float color[4];
-	float depth;
-	uint8_t stencil;
-} fimgClearContext;
 
 struct _fimgContext {
 	volatile char *base;
@@ -500,11 +571,12 @@ struct _fimgContext {
 #ifdef FIMG_FIXED_PIPELINE
 	fimgCompatContext compat;
 #endif
-	fimgClearContext clear;
 	/* Shared context */
 	unsigned int invalTexCache;
 	unsigned int numAttribs;
 	unsigned int fbHeight;
+	unsigned int fbFlags;
+	int flipY;
 	/* Register queue */
 	unsigned int *queueStart;
 	unsigned int *queue;
@@ -515,8 +587,6 @@ struct _fimgContext {
 	uint8_t *vertexData;
 	size_t vertexDataSize;
 };
-
-#define FIMG_DEBUG_HW_LOCK
 
 /* Registry accessors */
 static inline void fimgWrite(fimgContext *ctx, unsigned int data, unsigned int addr)
@@ -657,7 +727,6 @@ static inline void fimgGetHardware(fimgContext *ctx)
 		fimgFlushCache(ctx, 3, 3);
 		fimgSelectiveFlush(ctx, FGHI_PIPELINE_CCACHE);
 		fimgWaitForCacheFlush(ctx, 3, 3);
-		fimgInvalidateCache(ctx, 1, 3);
 		/* Fall through */
 	case 1:
 		fimgRestoreContext(ctx);

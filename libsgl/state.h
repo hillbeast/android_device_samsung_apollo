@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/state.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -36,13 +36,8 @@
 #include "fgltextureobject.h"
 #include "fglbufferobject.h"
 #include "fglobject.h"
-
-enum {
-	FGL_COMP_RED = 0,
-	FGL_COMP_GREEN,
-	FGL_COMP_BLUE,
-	FGL_COMP_ALPHA
-};
+#include "fglframebuffer.h"
+#include "fglrenderbuffer.h"
 
 enum {
 	FGL_COMP_NX = 0,
@@ -76,8 +71,12 @@ struct FGLArrayState {
 	FGLBuffer *buffer;
 
 	FGLArrayState() :
-		enabled(GL_FALSE), pointer(NULL), stride(0), width(4),
-		type(FGHI_ATTRIB_DT_FLOAT), size(FGHI_NUMCOMP(4)),
+		enabled(GL_FALSE),
+		pointer(NULL),
+		stride(0),
+		width(4),
+		type(FGHI_ATTRIB_DT_FLOAT),
+		size(FGHI_NUMCOMP(4)),
 		buffer(0) {};
 };
 
@@ -133,39 +132,33 @@ struct FGLEGLState {
 	EGLConfig config;
 	EGLSurface draw;
 	EGLSurface depth;
-	EGLSurface read;
 
 	FGLEGLState() :
-		flags(0), dpy(0), config(0), draw(0), depth(0), read(0) {};
-};
-
-struct FGLSurfaceState {
-	FGLSurface *draw;
-	FGLSurface *read;
-	FGLSurface *depth;
-	GLint width;
-	GLint stride;
-	GLint height;
-	unsigned int format;
-	unsigned int depthFormat;
-
-	FGLSurfaceState() : draw(0), read(0), depth(0) {};
+		flags(0),
+		dpy(0),
+		config(0),
+		draw(0),
+		depth(0) {};
 };
 
 struct FGLTextureState {
 	FGLTexture defTexture;
 	FGLTextureObjectBinding binding;
+	fimgTexFunc fglFunc;
 	bool enabled;
 
 	FGLTextureState() :
-		defTexture(), binding(), enabled(false) {};
+		defTexture(),
+		binding(this),
+		fglFunc(FGFP_TEXFUNC_MODULATE),
+		enabled(false) {};
 
 	inline FGLTexture *getTexture(void)
 	{
-		if(binding.isBound())
-			return binding.get();
-		else
-			return &defTexture;
+		FGLTexture *tex = binding.get();
+		if (!tex)
+			tex = &defTexture;
+		return tex;
 	}
 };
 
@@ -176,7 +169,10 @@ struct FGLScissorState {
 	GLint height;
 
 	FGLScissorState() :
-		left(0), bottom(0), width(2048), height(2048) {};
+		left(0),
+		bottom(0),
+		width(2048),
+		height(2048) {};
 };
 
 struct FGLMaskState {
@@ -188,7 +184,12 @@ struct FGLMaskState {
 	GLint stencil;
 
 	FGLMaskState() :
-		alpha(1), red(1), green(1), blue(1), depth(1), stencil(0xff) {};
+		alpha(1),
+		red(1),
+		green(1),
+		blue(1),
+		depth(1),
+		stencil(0xff) {};
 };
 
 struct FGLStencilState {
@@ -200,8 +201,12 @@ struct FGLStencilState {
 	GLenum passDepthPass;
 
 	FGLStencilState() :
-		mask(0xffffffff), ref(0), func(GL_ALWAYS), fail(GL_KEEP),
-		passDepthFail(GL_KEEP), passDepthPass(GL_KEEP) {};
+		mask(0xffffffff),
+		ref(0),
+		func(GL_ALWAYS),
+		fail(GL_KEEP),
+		passDepthFail(GL_KEEP),
+		passDepthPass(GL_KEEP) {};
 };
 
 struct FGLPerFragmentState {
@@ -217,8 +222,11 @@ struct FGLPerFragmentState {
 	fimgBlendFunction fglBlendDst;
 
 	FGLPerFragmentState() :
-		blendSrc(GL_ONE), blendDst(GL_ZERO), logicOp(GL_COPY),
-		masked(false), fglBlendSrc(FGPF_BLEND_FUNC_ONE),
+		blendSrc(GL_ONE),
+		blendDst(GL_ZERO),
+		logicOp(GL_COPY),
+		masked(false),
+		fglBlendSrc(FGPF_BLEND_FUNC_ONE),
 		fglBlendDst(FGPF_BLEND_FUNC_ZERO) {};
 };
 
@@ -243,8 +251,12 @@ struct FGLRasterizerState {
 	GLfloat polyOffUnits;
 
 	FGLRasterizerState() :
-		lineWidth(1.0f), pointSize(1.0f), cullFace(GL_BACK),
-		frontFace(GL_CCW), polyOffFactor(0.0f), polyOffUnits(0.0f) {};
+		lineWidth(1.0f),
+		pointSize(1.0f),
+		cullFace(GL_BACK),
+		frontFace(GL_CCW),
+		polyOffFactor(0.0f),
+		polyOffUnits(0.0f) {};
 };
 
 struct FGLEnableState {
@@ -259,8 +271,41 @@ struct FGLEnableState {
 	unsigned alphaTest	:1;
 
 	FGLEnableState() :
-		cullFace(0), polyOffFill(0), scissorTest(0), stencilTest(0),
-		depthTest(0), blend(0), dither(1), colorLogicOp(0) {};
+		cullFace(0),
+		polyOffFill(0),
+		scissorTest(0),
+		stencilTest(0),
+		depthTest(0),
+		blend(0),
+		dither(1),
+		colorLogicOp(0) {};
+};
+
+struct FGLFramebufferState {
+	FGLDefaultFramebuffer defFramebuffer;
+	FGLFramebufferObjectBinding binding;
+	FGLAbstractFramebuffer *current;
+	uint32_t curWidth;
+	uint32_t curHeight;
+	uint32_t curColorFormat;
+	int curFlipY;
+
+	FGLFramebufferState() :
+		defFramebuffer(),
+		binding(this),
+		current(0),
+		curWidth(0),
+		curHeight(0),
+		curColorFormat(0),
+		curFlipY(-1) {};
+
+	inline FGLAbstractFramebuffer *get(void)
+	{
+		FGLAbstractFramebuffer *fb = binding.get();
+		if (!fb)
+			fb = &defFramebuffer;
+		return fb;
+	}
 };
 
 struct FGLContext {
@@ -274,8 +319,8 @@ struct FGLContext {
 	FGLMatrixState matrix;
 	FGLTextureState texture[FGL_MAX_TEXTURE_UNITS];
 	FGLTextureState textureExternal[FGL_MAX_TEXTURE_UNITS];
-	FGLuint unpackAlignment;
-	FGLuint packAlignment;
+	GLuint unpackAlignment;
+	GLuint packAlignment;
 	FGLBufferObjectBinding arrayBuffer;
 	FGLBufferObjectBinding elementArrayBuffer;
 	FGLViewportState viewport;
@@ -284,17 +329,22 @@ struct FGLContext {
 	FGLClearState clear;
 	FGLTexture *busyTexture[FGL_MAX_TEXTURE_UNITS];
 	FGLEnableState enable;
+	FGLFramebufferState framebuffer;
+	FGLRenderbufferBinding renderbuffer;
 	/* EGL state */
 	FGLEGLState egl;
-	FGLSurfaceState surface;
 	bool finished;
 
 	/* Static initializers */
 	static FGLvec4f defaultVertex[4 + FGL_MAX_TEXTURE_UNITS];
 
 	FGLContext(fimgContext *fctx) :
-		fimg(fctx), activeTexture(0), clientActiveTexture(0),
-		unpackAlignment(4), packAlignment(4), finished(true)
+		fimg(fctx),
+		activeTexture(0),
+		clientActiveTexture(0),
+		unpackAlignment(4),
+		packAlignment(4),
+		finished(true)
 	{
 		memcpy(vertex, defaultVertex, (4 + FGL_MAX_TEXTURE_UNITS) * sizeof(FGLvec4f));
 		for (int i = 0; i < FGL_MAX_TEXTURE_UNITS; ++i) {

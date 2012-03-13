@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/glesFramebuffer.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -22,11 +22,12 @@
 #ifndef _GLESFRAMEBUFFER_H_
 #define _GLESFRAMEBUFFER_H_
 
-extern void fglSetColorBuffer(FGLContext *, FGLSurface *, unsigned int,
-				unsigned int, unsigned int, unsigned int);
+extern void fglSetColorBuffer(FGLContext *gl, FGLSurface *cbuf,
+				unsigned int width, unsigned int height,
+				unsigned int format);
 
-extern void fglSetDepthBuffer(FGLContext *, FGLSurface *, unsigned int);
-
-extern void fglSetReadBuffer(FGLContext *, FGLSurface *);
+extern void fglSetDepthStencilBuffer(FGLContext *gl, FGLSurface *zbuf,
+				unsigned int width, unsigned int height,
+				unsigned int format);
 
 #endif /* _GLESFRAMEBUFFER_H_ */

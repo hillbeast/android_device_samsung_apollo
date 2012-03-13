@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/glesBase.cpp
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -37,7 +37,7 @@
 #include "libfimg/fimg.h"
 #include "s3c_g2d.h"
 
-/**
+/*
 	Error handling
 */
 
@@ -54,7 +54,7 @@ GL_API GLenum GL_APIENTRY glGetError (void)
 	return error;
 }
 
-/**
+/*
 	Vertex state
 */
 
@@ -206,7 +206,7 @@ GL_API void GL_APIENTRY glBindBuffer (GLenum target, GLuint buffer)
 	}
 
 	if(buffer == 0) {
-		binding->unbind();
+		binding->bind(0);
 		return;
 	}
 
@@ -216,17 +216,17 @@ GL_API void GL_APIENTRY glBindBuffer (GLenum target, GLuint buffer)
 		return;
 	}
 
-	FGLBufferObject *obj = fglBufferObjects[buffer];
-	if(obj == NULL) {
-		obj = new FGLBufferObject(buffer);
-		if (obj == NULL) {
+	FGLBuffer *buf = fglBufferObjects[buffer];
+	if(buf == NULL) {
+		buf = new FGLBuffer(buffer);
+		if (buf == NULL) {
 			setError(GL_OUT_OF_MEMORY);
 			return;
 		}
-		fglBufferObjects[buffer] = obj;
+		fglBufferObjects[buffer] = buf;
 	}
 
-	obj->bind(binding);
+	binding->bind(&buf->object);
 }
 
 GL_API void GL_APIENTRY glBufferData (GLenum target, GLsizeiptr size,
@@ -635,7 +635,7 @@ GL_API void GL_APIENTRY glClientActiveTexture (GLenum texture)
 	ctx->clientActiveTexture = unit;
 }
 
-/**
+/*
 	Drawing
 */
 
@@ -710,22 +710,114 @@ static inline void fglSetupTextures(FGLContext *ctx)
 
 		if(enabled && tex->surface && tex->isComplete()) {
 			/* Texture is ready */
-			if (tex->dirty)
+			if (tex->dirty) {
 				tex->surface->flush();
-			fimgCompatSetupTexture(ctx->fimg, tex->fimg, i, tex->swap);
-			fimgCompatSetTextureEnable(ctx->fimg, i, 1);
+				tex->dirty = false;
+				flush = true;
+			}
+			fimgCompatSetupTexture(ctx->fimg, tex->fimg, i);
+			fimgCompatSetTextureFunc(ctx->fimg,
+						i, ctx->texture[i].fglFunc);
 			ctx->busyTexture[i] = tex;
-			flush = true;
-			if (!tex->eglImage)
-				tex->dirty = 0;
 		} else {
 			/* Texture is not ready */
-			fimgCompatSetTextureEnable(ctx->fimg, i, 0);
+			fimgCompatSetTextureFunc(ctx->fimg,
+							i, FGFP_TEXFUNC_NONE);
 		}
 	} while (i--);
 
 	if (flush)
 		fimgInvalidateTextureCache(ctx->fimg);
+}
+
+static void fglSetScissor(FGLContext *ctx, GLint x, GLint y,
+						GLsizei width, GLsizei height);
+static void fglSetBlending(FGLContext *ctx);
+static void fglSetColorMask(FGLContext *ctx);
+
+static inline int fglSetupFramebuffer(FGLContext *ctx)
+{
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+	FGLFramebufferAttachable *fba;
+
+	if (!fb->isValid())
+		return -1;
+
+	if (ctx->framebuffer.current == fb && !fb->isDirty())
+		return 0;
+
+	uint32_t width = fb->getWidth();
+	uint32_t height = fb->getHeight();
+	uint32_t colorFormat = fb->getColorFormat();
+	uint32_t depthFormat = fb->getDepthFormat();
+	const FGLPixelFormat *pix = FGLPixelFormat::get(colorFormat);
+
+	fba = fb->get(FGL_ATTACHMENT_COLOR);
+
+	int flipY = (fba->getType() != GL_TEXTURE);
+
+	fimgSetFrameBufSize(ctx->fimg, width, height, flipY);
+	fimgSetFrameBufParams(ctx->fimg, pix->flags, pix->pixFormat);
+	fimgSetColorBufBaseAddr(ctx->fimg, fba->surface->paddr);
+
+	int depthMask = 0, depthTest = 0;
+	int stencilMask = 0, stencilTest = 0;
+
+	fba = fb->get(FGL_ATTACHMENT_DEPTH);
+	if (!fba)
+		fba = fb->get(FGL_ATTACHMENT_STENCIL);
+
+	if (depthFormat & 0xff) {
+		depthMask = ctx->perFragment.mask.depth;
+		depthTest = ctx->enable.depthTest;
+	}
+
+	if (depthFormat >> 8) {
+		stencilMask = ctx->perFragment.mask.stencil;
+		stencilTest = ctx->enable.stencilTest;
+	}
+
+	if (depthFormat)
+		fimgSetZBufBaseAddr(ctx->fimg, fba->surface->paddr);
+	else
+		fimgSetZBufBaseAddr(ctx->fimg, 0);
+
+	fimgSetZBufWriteMask(ctx->fimg, depthMask);
+	fimgSetDepthEnable(ctx->fimg, depthTest);
+	fimgSetStencilBufWriteMask(ctx->fimg, 0, stencilMask);
+	fimgSetStencilBufWriteMask(ctx->fimg, 1, stencilMask);
+	fimgSetStencilEnable(ctx->fimg, stencilTest);
+
+	if (ctx->framebuffer.curFlipY != flipY
+	    || ctx->framebuffer.curWidth != width
+	    || ctx->framebuffer.curHeight != height) {
+		if (ctx->enable.scissorTest)
+			fglSetScissor(ctx, ctx->perFragment.scissor.left,
+					ctx->perFragment.scissor.bottom,
+					ctx->perFragment.scissor.width,
+					ctx->perFragment.scissor.height);
+		else
+			fglSetScissor(ctx, 0, 0, width, height);
+
+		fimgSetViewportParams(ctx->fimg, ctx->viewport.x,
+					ctx->viewport.y,ctx->viewport.width,
+					ctx->viewport.height);
+	}
+
+	if (ctx->framebuffer.curColorFormat != colorFormat) {
+		fglSetBlending(ctx);
+		fglSetColorMask(ctx);
+	}
+
+	ctx->framebuffer.curWidth = width;
+	ctx->framebuffer.curHeight = height;
+	ctx->framebuffer.curColorFormat = colorFormat;
+	ctx->framebuffer.curFlipY = flipY;
+
+	ctx->framebuffer.current = fb;
+	fb->markClean();
+
+	return 0;
 }
 
 GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count)
@@ -739,6 +831,11 @@ GL_API void GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count)
 
 	fimgArray arrays[4 + FGL_MAX_TEXTURE_UNITS];
 	FGLContext *ctx = getContext();
+
+	if (fglSetupFramebuffer(ctx)) {
+		setError(GL_INVALID_FRAMEBUFFER_OPERATION_OES);
+		return;
+	}
 
 	for(int i = 0; i < (4 + FGL_MAX_TEXTURE_UNITS); ++i) {
 		if(ctx->array[i].enabled) {
@@ -824,6 +921,11 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 	uint32_t fglMode;
 	fimgArray arrays[4 + FGL_MAX_TEXTURE_UNITS];
 	FGLContext *ctx = getContext();
+
+	if (fglSetupFramebuffer(ctx)) {
+		setError(GL_INVALID_FRAMEBUFFER_OPERATION_OES);
+		return;
+	}
 
 	if(ctx->elementArrayBuffer.isBound())
 		indices = ctx->elementArrayBuffer.get()->getAddress(indices);
@@ -932,7 +1034,7 @@ GL_API void GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type,
 	}
 }
 
-/**
+/*
 	Draw texture
 */
 
@@ -942,6 +1044,11 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 	GLboolean arrayEnabled[4 + FGL_MAX_TEXTURE_UNITS];
 	GLfloat vertices[3*4];
 	GLfloat texcoords[2][2*4];
+
+	if (fglSetupFramebuffer(ctx)) {
+		setError(GL_INVALID_FRAMEBUFFER_OPERATION_OES);
+		return;
+	}
 
 	// Save current state and prepare to drawing
 
@@ -1106,7 +1213,7 @@ GL_API void GL_APIENTRY glDrawTexfvOES (const GLfloat *coords)
 	glDrawTexfOES(coords[0], coords[1], coords[2], coords[3], coords[4]);
 }
 
-/**
+/*
 	Transformations
 */
 
@@ -1138,12 +1245,12 @@ GL_API void GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei hei
 	FGLContext *ctx = getContext();
 
 	// Clamp the width
-	if (width > ctx->surface.width)
-		width = ctx->surface.width;
+	if (width > FGL_MAX_VIEWPORT_DIMS)
+		width = FGL_MAX_VIEWPORT_DIMS;
 
 	// Clamp the height
-	if (height > ctx->surface.height)
-		height = ctx->surface.height;
+	if (height > FGL_MAX_VIEWPORT_DIMS)
+		height = FGL_MAX_VIEWPORT_DIMS;
 
 	ctx->viewport.x = x;
 	ctx->viewport.y = y;
@@ -1153,7 +1260,7 @@ GL_API void GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei hei
 	fimgSetViewportParams(ctx->fimg, x, y, width, height);
 }
 
-/**
+/*
 	Rasterization
 */
 
@@ -1266,17 +1373,19 @@ GL_API void GL_APIENTRY glPolygonOffsetx (GLfixed factor, GLfixed units)
 	glPolygonOffset(floatFromFixed(factor), floatFromFixed(units));
 }
 
-/**
+/*
 	Per-fragment operations
 */
 
 static inline void fglSetScissor(FGLContext *ctx, GLint x, GLint y,
 						GLsizei width, GLsizei height)
 {
-	unsigned int xmin = clamp(x, 0, ctx->surface.width);
-	unsigned int xmax = clamp(x + width, 0, ctx->surface.width);
-	unsigned int ymin = clamp(y, 0, ctx->surface.height);
-	unsigned int ymax = clamp(y + height, 0, ctx->surface.height);
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+
+	GLuint xmin = clamp(x,		0, (GLint)fb->getWidth());
+	GLuint xmax = clamp(x + width,	0, (GLint)fb->getWidth());
+	GLuint ymin = clamp(y,		0, (GLint)fb->getHeight());
+	GLuint ymax = clamp(y + height,	0, (GLint)fb->getHeight());
 
 	fimgSetXClip(ctx->fimg, xmin, xmax);
 	fimgSetYClip(ctx->fimg, ymin, ymax);
@@ -1385,8 +1494,10 @@ GL_API void GL_APIENTRY glStencilFunc (GLenum func, GLint ref, GLuint mask)
 
 	FGLContext *ctx = getContext();
 
-	fimgSetFrontStencilFunc(ctx->fimg, fglFunc, ref & 0xff, mask & 0xff);
-	fimgSetBackStencilFunc(ctx->fimg, fglFunc, ref & 0xff, mask & 0xff);
+	ref = clamp(ref, 0, 0xff);
+
+	fimgSetFrontStencilFunc(ctx->fimg, fglFunc, ref, mask & 0xff);
+	fimgSetBackStencilFunc(ctx->fimg, fglFunc, ref, mask & 0xff);
 	ctx->perFragment.stencil.func = func;
 	ctx->perFragment.stencil.ref = ref;
 	ctx->perFragment.stencil.mask = mask;
@@ -1507,7 +1618,10 @@ static void fglSetBlending(FGLContext *ctx)
 		return;
 	}
 
-	if (fglColorConfigs[ctx->surface.format].alpha)
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+	const FGLPixelFormat *fmt = FGLPixelFormat::get(fb->getColorFormat());
+
+	if (fmt->comp[FGL_COMP_ALPHA].size)
 		fimgSetBlendFunc(ctx->fimg, fglSrc, fglSrc, fglDest, fglDest);
 	else
 		fimgSetBlendFuncNoAlpha(ctx->fimg, fglSrc, fglSrc, fglDest, fglDest);
@@ -1656,6 +1770,40 @@ GL_API void GL_APIENTRY glLogicOp (GLenum opcode)
 	ctx->perFragment.logicOp = opcode;
 }
 
+static const int componentPositionsRGBA[] = {
+	3,	/* FGL_COMP_RED */
+	2,	/* FGL_COMP_GREEN */
+	1,	/* FGL_COMP_BLUE */
+	0	/* FGL_COMP_ALPHA */
+};
+
+static const int componentPositionsBGRA[] = {
+	1,	/* FGL_COMP_RED */
+	2,	/* FGL_COMP_GREEN */
+	3,	/* FGL_COMP_BLUE */
+	0	/* FGL_COMP_ALPHA */
+};
+
+static const int *componentPositions[] = {
+	componentPositionsRGBA,
+	componentPositionsBGRA
+};
+
+static inline void fglSetColorMask(FGLContext *ctx)
+{
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+	const FGLPixelFormat *pix = FGLPixelFormat::get(fb->getColorFormat());
+	const int *pos = componentPositions[!!(pix->flags & FGL_PIX_BGR)];
+	unsigned int mask = 0;
+
+	mask |= !ctx->perFragment.mask.red << pos[FGL_COMP_RED];
+	mask |= !ctx->perFragment.mask.green << pos[FGL_COMP_GREEN];
+	mask |= !ctx->perFragment.mask.blue << pos[FGL_COMP_BLUE];
+	mask |= !ctx->perFragment.mask.alpha << pos[FGL_COMP_ALPHA];
+
+	fimgSetColorBufWriteMask(ctx->fimg, mask);
+}
+
 GL_API void GL_APIENTRY glColorMask (GLboolean red, GLboolean green,
 						GLboolean blue, GLboolean alpha)
 {
@@ -1668,32 +1816,34 @@ GL_API void GL_APIENTRY glColorMask (GLboolean red, GLboolean green,
 	ctx->perFragment.masked = (!red || !green || !blue || !alpha);
 
 	fglSetBlending(ctx);
-	fimgSetColorBufWriteMask(ctx->fimg, red, green, blue, alpha);
+	fglSetColorMask(ctx);
 }
 
 GL_API void GL_APIENTRY glDepthMask (GLboolean flag)
 {
 	FGLContext *ctx = getContext();
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
 
 	ctx->perFragment.mask.depth = flag;
 
-	if (ctx->surface.depthFormat & 0xff)
+	if (fb->getDepthFormat() & 0xff)
 		fimgSetZBufWriteMask(ctx->fimg, flag);
 }
 
 GL_API void GL_APIENTRY glStencilMask (GLuint mask)
 {
 	FGLContext *ctx = getContext();
+	FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
 
 	ctx->perFragment.mask.stencil = mask & 0xff;
 
-	if (ctx->surface.depthFormat >> 8) {
+	if (fb->getDepthFormat() >> 8) {
 		fimgSetStencilBufWriteMask(ctx->fimg, 0, mask & 0xff);
 		fimgSetStencilBufWriteMask(ctx->fimg, 1, mask & 0xff);
 	}
 }
 
-/**
+/*
 	Enable/disable
 */
 
@@ -1716,30 +1866,33 @@ static inline void fglSet(GLenum cap, bool state)
 		fimgEnableDepthOffset(ctx->fimg, state);
 		ctx->enable.polyOffFill = 1;
 		break;
-	case GL_SCISSOR_TEST:
+	case GL_SCISSOR_TEST: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
 		ctx->enable.scissorTest = state;
-		if (state) {
+		if (state)
 			fglSetScissor(ctx, ctx->perFragment.scissor.left,
 					ctx->perFragment.scissor.bottom,
 					ctx->perFragment.scissor.width,
 					ctx->perFragment.scissor.height);
-		} else {
-			fglSetScissor(ctx, 0, 0, ctx->surface.width,
-							ctx->surface.height);
-		}
-		break;
+		else
+			fglSetScissor(ctx, 0, 0, fb->getWidth(), fb->getHeight());
+		break; }
 	case GL_ALPHA_TEST:
 		fimgSetAlphaEnable(ctx->fimg, state);
 		ctx->enable.alphaTest = state;
 		break;
-	case GL_STENCIL_TEST:
-		fimgSetStencilEnable(ctx->fimg, state);
+	case GL_STENCIL_TEST: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		if (fb->getDepthFormat() >> 8)
+			fimgSetStencilEnable(ctx->fimg, state);
 		ctx->enable.stencilTest = state;
-		break;
-	case GL_DEPTH_TEST:
-		fimgSetDepthEnable(ctx->fimg, state);
+		break; }
+	case GL_DEPTH_TEST: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		if (fb->getDepthFormat() & 0xff)
+			fimgSetDepthEnable(ctx->fimg, state);
 		ctx->enable.depthTest = state;
-		break;
+		break; }
 	case GL_BLEND:
 		ctx->enable.blend = state;
 		fglSetBlending(ctx);
@@ -1779,7 +1932,7 @@ GL_API void GL_APIENTRY glDisable (GLenum cap)
 	fglSet(cap, false);
 }
 
-/**
+/*
 	Flush/Finish
 */
 
@@ -1803,7 +1956,7 @@ GL_API void GL_APIENTRY glFinish (void)
 	ctx->finished = true;
 }
 
-/**
+/*
 	Stubs
 */
 
@@ -1926,7 +2079,7 @@ GL_API void GL_APIENTRY glPointParameterxv (GLenum pname, const GLfixed *params)
 	FUNC_UNIMPLEMENTED;
 }
 
-/**
+/*
 	Context management
 */
 
@@ -1952,10 +2105,17 @@ FGLContext *fglCreateContext(void)
 	return ctx;
 }
 
+extern FGLObjectManager<FGLTexture, FGL_MAX_TEXTURE_OBJECTS> fglTextureObjects;
+extern FGLObjectManager<FGLFramebuffer, FGL_MAX_FRAMEBUFFER_OBJECTS> fglFramebufferObjects;
+extern FGLObjectManager<FGLRenderbuffer, FGL_MAX_RENDERBUFFER_OBJECTS> fglRenderbufferObjects;
+
 void fglDestroyContext(FGLContext *ctx)
 {
 	fglBufferObjects.clean(ctx);
-	fglCleanTextureObjects(ctx);
+	fglTextureObjects.clean(ctx);
+	fglFramebufferObjects.clean(ctx);
+	fglRenderbufferObjects.clean(ctx);
+
 	fimgDestroyContext(ctx->fimg);
 	delete ctx;
 }

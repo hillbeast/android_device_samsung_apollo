@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/fgltextureobject.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -25,16 +25,26 @@
 #include "fglsurface.h"
 #include "fglobject.h"
 #include "fglimage.h"
+#include "fglframebufferattachable.h"
 
-struct FGLTexture {
+struct FGLTexture;
+struct FGLTextureState;
+
+typedef FGLObject<FGLTexture, FGLTextureState> FGLTextureObject;
+typedef FGLObjectBinding<FGLTexture, FGLTextureState> FGLTextureObjectBinding;
+
+struct FGLTexture : public FGLFramebufferAttachable {
+	FGLTextureObject object;
+
+	unsigned int	name;
 	/* Memory surface */
-	FGLSurface	*surface;
+	using FGLFramebufferAttachable::surface;
 	/* GL state */
-	GLint		width;
-	GLint		height;
+	using FGLFramebufferAttachable::width;
+	using FGLFramebufferAttachable::height;
 	GLboolean	compressed;
 	GLint		maxLevel;
-	GLenum		format;
+	using FGLFramebufferAttachable::format;
 	GLenum		type;
 	GLenum		minFilter;
 	GLenum		magFilter;
@@ -49,19 +59,26 @@ struct FGLTexture {
 	GLenum		target;
 	/* HW state */
 	fimgTexture	*fimg;
-	uint32_t	fglFormat;
-	uint32_t	bpp;
 	bool		convert;
 	bool		valid;
 	bool		dirty;
-	bool		swap;
 
-	FGLTexture() :
-		surface(0), compressed(0), maxLevel(0), format(GL_RGB),
-		type(GL_UNSIGNED_BYTE), minFilter(GL_NEAREST_MIPMAP_LINEAR),
-		magFilter(GL_LINEAR), sWrap(GL_REPEAT), tWrap(GL_REPEAT),
-		genMipmap(0), eglImage(0), invReady(false),
-		fimg(NULL), valid(false), dirty(false), swap(false)
+	FGLTexture(unsigned int name = 0) :
+		object(this),
+		name(name),
+		compressed(0),
+		maxLevel(0),
+		type(GL_UNSIGNED_BYTE),
+		minFilter(GL_NEAREST_MIPMAP_LINEAR),
+		magFilter(GL_LINEAR),
+		sWrap(GL_REPEAT),
+		tWrap(GL_REPEAT),
+		genMipmap(0),
+		eglImage(0),
+		invReady(false),
+		fimg(NULL),
+		valid(false),
+		dirty(false)
 	{
 		fimg = fimgCreateTexture();
 		if(fimg == NULL)
@@ -70,7 +87,7 @@ struct FGLTexture {
 		valid = true;
 	}
 
-	~FGLTexture()
+	virtual ~FGLTexture()
 	{
 		if(!isValid())
 			return;
@@ -92,9 +109,16 @@ struct FGLTexture {
 	{
 		return (surface != 0);
 	}
-};
 
-typedef FGLObject<FGLTexture> FGLTextureObject;
-typedef FGLObjectBinding<FGLTexture> FGLTextureObjectBinding;
+	virtual GLenum getType(void) const
+	{
+		return GL_TEXTURE;
+	}
+
+	virtual GLuint getName(void) const
+	{
+		return name;
+	}
+};
 
 #endif

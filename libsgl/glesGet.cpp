@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/glesGet.cpp
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -36,7 +36,7 @@
 #include "libfimg/fimg.h"
 #include "s3c_g2d.h"
 
-/**
+/*
 	Client API information
 */
 
@@ -44,134 +44,449 @@ static char const * const gVendorString     = "OpenFIMG";
 static char const * const gRendererString   = "FIMG-3DSE";
 static char const * const gVersionString    = "OpenGL ES-CM 1.1";
 static char const * const gExtensionsString =
-#if 0
-	"GL_OES_point_sprite "                  // TODO
-	"GL_ARB_texture_env_combine "		// TODO
-	"GL_ARB_texture_env_crossbar "		// TODO
-	"GL_ARB_texture_env_dot3 "		// TODO
-	"GL_ARB_texture_mirrored_repeat "	// TODO
-	"GL_ARB_vertex_buffer_object "		// TODO
-	"GL_ATI_texture_compression_atitc "	// TODO
-	"GL_EXT_blend_equation_separate "	// TODO
-	"GL_EXT_blend_func_separate "		// TODO
-	"GL_EXT_blend_minmax "			// TODO
-	"GL_EXT_blend_subtract "		// TODO
-	"GL_EXT_stencil_wrap "			// TODO
-	"GL_OES_matrix_palette "		// TODO
-	"GL_OES_vertex_buffer_object "		// TODO
-	"GL_QUALCOMM_vertex_buffer_object "	// TODO
-	"GL_QUALCOMM_direct_texture "		// TODO
-#endif
 	"GL_OES_byte_coordinates "
 	"GL_OES_fixed_point "
 	"GL_OES_single_precision "
 	"GL_OES_read_format "
-	//"GL_OES_compressed_paletted_texture "   // TODO
 	"GL_OES_draw_texture "
-	//"GL_OES_matrix_get "                    // TODO
-	//"GL_OES_query_matrix "                  // TODO
 	"GL_OES_EGL_image "
 	"GL_OES_EGL_image_external "
+	"GL_OES_framebuffer_object "
+	"GL_OES_packed_depth_stencil "
+	"GL_OES_texture_npot "
+	"GL_OES_point_size_array "
+	"GL_OES_rgb8_rgba8 "
+	"GL_OES_depth24 "
+	"GL_OES_stencil8 "
 	"GL_EXT_texture_format_BGRA8888 "
-	//"GL_OES_compressed_ETC1_RGB8_texture "  // TODO
-	//"GL_ARB_texture_compression "           // TODO IMPORTANT
-	"GL_ARB_texture_non_power_of_two "
-	//"GL_ANDROID_user_clip_plane "           // TODO
-	//"GL_ANDROID_vertex_buffer_object "      // TODO
-	//"GL_ANDROID_generate_mipmap "           // TODO
-	"GL_OES_point_size_array"
+	"GL_ARB_texture_non_power_of_two"
 ;
 
 static const GLint fglCompressedTextureFormats[] = {
-#if 0
-	GL_PALETTE4_RGB8_OES,
-	GL_PALETTE4_RGBA8_OES,
-	GL_PALETTE4_R5_G6_B5_OES,
-	GL_PALETTE4_RGBA4_OES,
-	GL_PALETTE4_RGB5_A1_OES,
-	GL_PALETTE8_RGB8_OES,
-	GL_PALETTE8_RGBA8_OES,
-	GL_PALETTE8_R5_G6_B5_OES,
-	GL_PALETTE8_RGBA4_OES,
-	GL_PALETTE8_RGB5_A1_OES,
-	GL_RGB_S3TC_OES,
-	GL_RGBA_S3TC_OES
-#endif
 };
 
-const FGLColorConfigDesc fglColorConfigs[] = {
-	/* [FGPF_COLOR_MODE_555] */
+const FGLPixelFormat FGLPixelFormat::table[] = {
+	/*
+	 * FGL_PIXFMT_NONE
+	 *
+	 * Dummy format used when format is unspecified
+	 */
 	{
-		5, 5, 5, 0,
+		{ { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		-1,
+		-1,
+		0
+	},
+
+	/*
+	 * Renderable formats follow
+	 */
+
+	/*
+	 * FGL_PIXFMT_XRGB1555
+	 * -----------------------------------------
+	 * | 15 - 15 | 14 - 10 | 9  -  5 | 4  -  0 |
+	 * -----------------------------------------
+	 * |    X    |    R    |    G    |    B    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 10, 5 }, { 5, 5 }, { 0, 5 }, { 15, 0 } },
 		GL_RGB,
 		GL_UNSIGNED_SHORT_5_5_5_1,
 		2,
-		10, 5, 0, 0,
-		GL_TRUE, /* Force opaque */
 		FGTU_TSTA_TEXTURE_FORMAT_1555,
+		FGPF_COLOR_MODE_555,
+		FGL_PIX_OPAQUE
 	},
-	/* [FGPF_COLOR_MODE_565] */
+	/*
+	 * FGL_PIXFMT_RGB565
+	 * -------------------------------
+	 * | 15 - 11 | 10 -  5 | 4  -  0 |
+	 * -------------------------------
+	 * |    R    |    G    |    B    |
+	 * -------------------------------
+	 */
 	{
-		5, 6, 5, 0,
+		{ { 11, 5 }, { 5, 6 }, { 0, 5 }, { 0, 0 } },
 		GL_RGB,
 		GL_UNSIGNED_SHORT_5_6_5,
 		2,
-		11, 5, 0, 0,
-		GL_FALSE,
 		FGTU_TSTA_TEXTURE_FORMAT_565,
+		FGPF_COLOR_MODE_565,
+		0
 	},
-	/* [FGPF_COLOR_MODE_4444] */
+	/*
+	 * FGL_PIXFMT_ARGB4444
+	 * -----------------------------------------
+	 * | 15 - 12 | 11 -  8 | 7  -  4 | 3  -  0 |
+	 * -----------------------------------------
+	 * |    A    |    R    |    G    |    B    |
+	 * -----------------------------------------
+	 */
 	{
-		4, 4, 4, 4,
+		{ { 8, 4 }, { 4, 4 }, { 0, 4 }, { 12, 4 } },
 		GL_RGBA,
 		GL_UNSIGNED_SHORT_4_4_4_4,
 		2,
-		12, 8, 4, 0,
-		GL_FALSE,
 		FGTU_TSTA_TEXTURE_FORMAT_4444,
+		FGPF_COLOR_MODE_4444,
+		0
 	},
-	/* [FGPF_COLOR_MODE_1555] */
+	/*
+	 * FGL_PIXFMT_ARGB1555
+	 * -----------------------------------------
+	 * | 15 - 15 | 14 - 10 | 9  -  5 | 4  -  0 |
+	 * -----------------------------------------
+	 * |    A    |    R    |    G    |    B    |
+	 * -----------------------------------------
+	 */
 	{
-		5, 5, 5, 1,
+		{ { 10, 5 }, { 5, 5 }, { 0, 5 }, { 15, 1 } },
 		GL_RGBA,
 		GL_UNSIGNED_SHORT_5_5_5_1,
 		2,
-		10, 5, 0, 15,
-		GL_FALSE,
 		FGTU_TSTA_TEXTURE_FORMAT_1555,
+		FGPF_COLOR_MODE_1555,
+		0
 	},
-	/* [FGPF_COLOR_MODE_0888] */
+	/*
+	 * FGL_PIXFMT_XRGB8888
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    X    |    R    |    G    |    B    |
+	 * -----------------------------------------
+	 */
 	{
-		8, 8, 8, 8,
+		{ { 16, 8 }, { 8, 8 }, { 0, 8 }, { 24, 0 } },
 		GL_BGRA_EXT,
 		GL_UNSIGNED_BYTE,
 		4,
-		16, 8, 0, 24,
-		GL_TRUE, /* Force opaque */
 		FGTU_TSTA_TEXTURE_FORMAT_8888,
+		FGPF_COLOR_MODE_0888,
+		FGL_PIX_OPAQUE
 	},
-	/* [FGPF_COLOR_MODE_8888] */
+	/*
+	 * FGL_PIXFMT_ARGB8888
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    A    |    R    |    G    |    B    |
+	 * -----------------------------------------
+	 */
 	{
-		8, 8, 8, 8,
+		{ { 16, 8 }, { 8, 8 }, { 0, 8 }, { 24, 8 } },
 		GL_BGRA_EXT,
 		GL_UNSIGNED_BYTE,
 		4,
-		16, 8, 0, 24,
-		GL_FALSE,
 		FGTU_TSTA_TEXTURE_FORMAT_8888,
+		FGPF_COLOR_MODE_8888,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_XBGR8888
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    X    |    B    |    G    |    R    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 0, 8 }, { 8, 8 }, { 16, 8 }, { 24, 0 } },
+		GL_RGBA,
+		GL_UNSIGNED_BYTE,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_8888,
+		FGPF_COLOR_MODE_0888,
+		FGL_PIX_OPAQUE | FGL_PIX_BGR
+	},
+	/*
+	 * FGL_PIXFMT_ABGR8888
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    A    |    B    |    G    |    R    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 0, 8 }, { 8, 8 }, { 16, 8 }, { 24, 8 } },
+		GL_RGBA,
+		GL_UNSIGNED_BYTE,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_8888,
+		FGPF_COLOR_MODE_8888,
+		FGL_PIX_BGR
+	},
+
+	/*
+	 * Non-renderable formats follow
+	 */
+
+	/*
+	 * FGL_PIXFMT_RGBA4444
+	 * -----------------------------------------
+	 * | 15 - 12 | 11 -  8 | 7  -  4 | 3  -  0 |
+	 * -----------------------------------------
+	 * |    R    |    G    |    B    |    A    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 12, 4 }, { 8, 4 }, { 4, 4 }, { 0, 4 } },
+		0,
+		0,
+		2,
+		FGTU_TSTA_TEXTURE_FORMAT_4444,
+		-1,
+		FGL_PIX_ALPHA_LSB
+	},
+	/*
+	 * FGL_PIXFMT_RGBA1555
+	 * -----------------------------------------
+	 * | 15 - 11 | 10 -  6 | 5  -  1 | 0  -  0 |
+	 * -----------------------------------------
+	 * |    R    |    G    |    B    |    A    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 11, 5 }, { 6, 5 }, { 1, 5 }, { 0, 1 } },
+		0,
+		0,
+		2,
+		FGTU_TSTA_TEXTURE_FORMAT_1555,
+		-1,
+		FGL_PIX_ALPHA_LSB
+	},
+	/*
+	 * FGL_PIXFMT_DEPTH16
+	 * -----------
+	 * | 15 -  0 |
+	 * -----------
+	 * |    D    |
+	 * -----------
+	 */
+	{
+		{ { 0, 16 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		2,
+		FGTU_TSTA_TEXTURE_FORMAT_DEPTHCOMP16,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_AL88
+	 * ---------------------
+	 * | 15 -  8 | 7  -  0 |
+	 * ---------------------
+	 * |    A    |    L    |
+	 * ---------------------
+	 */
+	{
+		{ { 0, 8 }, { 0, 0 }, { 0, 0 }, { 8, 8 } },
+		0,
+		0,
+		2,
+		FGTU_TSTA_TEXTURE_FORMAT_88,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_L8
+	 * -----------
+	 * | 7  -  0 |
+	 * -----------
+	 * |    L    |
+	 * -----------
+	 */
+	{
+		{ { 0, 8 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		1,
+		FGTU_TSTA_TEXTURE_FORMAT_8,
+		-1,
+		0
+	},
+
+	/*
+	 * Compressed formats follow
+	 */
+
+	/*
+	 * FGL_PIXFMT_1BPP
+	 * ---------------------------------
+	 * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	 * ---------------------------------
+	 * | P | P | P | P | P | P | P | P |
+	 * ---------------------------------
+	 */
+	{
+		{ { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		FGTU_TSTA_TEXTURE_FORMAT_1BPP,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_2BPP
+	 * ---------------------------------
+	 * | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+	 * ---------------------------------
+	 * |   P   |   P   |   P   |   P   |
+	 * ---------------------------------
+	 */
+	{
+		{ { 0, 2 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		FGTU_TSTA_TEXTURE_FORMAT_2BPP,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_4BPP
+	 * -----------------
+	 * | 7 - 4 | 3 - 0 |
+	 * -----------------
+	 * |   P   |   P   |
+	 * -----------------
+	 */
+	{
+		{ { 0, 4 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		FGTU_TSTA_TEXTURE_FORMAT_4BPP,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_8BPP
+	 * ---------
+	 * | 7 - 0 |
+	 * ---------
+	 * |   P   |
+	 * ---------
+	 */
+	{
+		{ { 0, 8 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		FGTU_TSTA_TEXTURE_FORMAT_8BPP,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_S3TC
+	 * -------------------------------
+	 * | 63 - 32 | 31 - 16 | 15 -  0 |
+	 * -------------------------------
+	 * |    L    |    C1   |    C0   |
+	 * -------------------------------
+	 */
+	{
+		{ { 0, 16 }, { 16, 16 }, { 32, 32 }, { 0, 0 } },
+		0,
+		0,
+		0,
+		FGTU_TSTA_TEXTURE_FORMAT_S3TC,
+		-1,
+		0
+	},
+
+	/*
+	 * YUV formats follow
+	 */
+
+	/*
+	 * FGL_PIXFMT_Y1VY0U
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    Y1   |    V    |    Y0   |    U    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 8, 8 }, { 0, 8 }, { 24, 8 }, { 16, 8 } },
+		0,
+		0,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_Y1VY0U,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_VY1UY0
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    V    |    Y1   |    U    |    Y0   |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 0, 8 }, { 8, 8 }, { 16, 8 }, { 24, 8 } },
+		0,
+		0,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_VY1UY0,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_Y1UY0V
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    Y1   |    U    |    Y0   |    V    |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 8, 8 }, { 16, 8 }, { 24, 8 }, { 0, 8 } },
+		0,
+		0,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_Y1UY0V,
+		-1,
+		0
+	},
+	/*
+	 * FGL_PIXFMT_UY1VY0
+	 * -----------------------------------------
+	 * | 31 - 24 | 23 - 16 | 15 -  8 | 7  -  0 |
+	 * -----------------------------------------
+	 * |    U    |    Y1   |    V    |    Y0   |
+	 * -----------------------------------------
+	 */
+	{
+		{ { 0, 8 }, { 24, 8 }, { 16, 8 }, { 8, 8 } },
+		0,
+		0,
+		4,
+		FGTU_TSTA_TEXTURE_FORMAT_UY1VY0,
+		-1,
+		0
 	},
 };
 
-const FGLColorConfigDesc *fglGetColorConfigDesc(unsigned int format)
+const FGLPixelFormat *FGLPixelFormat::get(unsigned int format)
 {
-	assert(format < NELEM(fglColorConfigs));
-
-	return &fglColorConfigs[format];
+	const FGLPixelFormat *desc = &table[FGL_PIXFMT_NONE];
+	if (format < NELEM(table))
+		desc = &table[format];
+	return desc;
 }
 
 // ----------------------------------------------------------------------------
 
-/**
+/*
 	glGet*
 */
 
@@ -269,13 +584,13 @@ void fglGetState(FGLContext *ctx, GLenum pname, FGLStateGetter &state)
 	switch (pname) {
 	case GL_ARRAY_BUFFER_BINDING:
 		if (ctx->arrayBuffer.isBound())
-			state.putInteger(ctx->arrayBuffer.getName());
+			state.putInteger(ctx->arrayBuffer.get()->getName());
 		else
 			state.putInteger(0);
 		break;
 	case GL_ELEMENT_ARRAY_BUFFER_BINDING:
 		if (ctx->elementArrayBuffer.isBound())
-			state.putInteger(ctx->elementArrayBuffer.getName());
+			state.putInteger(ctx->elementArrayBuffer.get()->getName());
 		else
 			state.putInteger(0);
 		break;
@@ -311,7 +626,7 @@ void fglGetState(FGLContext *ctx, GLenum pname, FGLStateGetter &state)
 		FGLTextureObjectBinding *b =
 				&ctx->texture[ctx->activeTexture].binding;
 		if (b->isBound())
-			state.putInteger(b->getName());
+			state.putInteger(b->get()->getName());
 		else
 			state.putInteger(0);
 		break; }
@@ -421,30 +736,58 @@ void fglGetState(FGLContext *ctx, GLenum pname, FGLStateGetter &state)
 	case GL_NUM_COMPRESSED_TEXTURE_FORMATS :
 		state.putInteger(NELEM(fglCompressedTextureFormats));
 		break;
-	case GL_RED_BITS :
-		state.putInteger(fglColorConfigs[ctx->surface.format].red);
-		break;
-	case GL_GREEN_BITS:
-		state.putInteger(fglColorConfigs[ctx->surface.format].green);
-		break;
-	case GL_BLUE_BITS :
-		state.putInteger(fglColorConfigs[ctx->surface.format].blue);
-		break;
-	case GL_ALPHA_BITS :
-		state.putInteger(fglColorConfigs[ctx->surface.format].alpha);
-		break;
-	case GL_DEPTH_BITS :
-		state.putInteger(ctx->surface.depthFormat & 0xff);
-		break;
-	case GL_STENCIL_BITS:
-		state.putInteger(ctx->surface.depthFormat >> 8);
-		break;
-	case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
-		state.putEnum(fglColorConfigs[ctx->surface.format].readType);
-		break;
-	case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
-		state.putEnum(fglColorConfigs[ctx->surface.format].readFormat);
-		break;
+	case GL_RED_BITS : {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putInteger(cfg->comp[FGL_COMP_RED].size);
+		break; }
+	case GL_GREEN_BITS: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putInteger(cfg->comp[FGL_COMP_GREEN].size);
+		break; }
+	case GL_BLUE_BITS : {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putInteger(cfg->comp[FGL_COMP_BLUE].size);
+		break; }
+	case GL_ALPHA_BITS : {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putInteger(cfg->comp[FGL_COMP_ALPHA].size);
+		break; }
+	case GL_DEPTH_BITS : {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		state.putInteger(fb->getDepthFormat() & 0xff);
+		break; }
+	case GL_STENCIL_BITS: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		state.putInteger(fb->getDepthFormat() >> 8);
+		break; }
+	case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putEnum(cfg->readType);
+		break; }
+	case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES: {
+		FGLAbstractFramebuffer *fb = ctx->framebuffer.get();
+		fb->checkStatus();
+		const FGLPixelFormat *cfg =
+				FGLPixelFormat::get(fb->getColorFormat());
+		state.putEnum(cfg->readFormat);
+		break; }
 
 	/* Single boolean values */
 	case GL_CULL_FACE:

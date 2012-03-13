@@ -81,12 +81,32 @@ static const FGLConfigPair configAttributes1[] = {
 	{ EGL_BLUE_SIZE,        5 },
 	{ EGL_GREEN_SIZE,       6 },
 	{ EGL_RED_SIZE,         5 },
+	{ EGL_DEPTH_SIZE,       0 },
+	{ EGL_STENCIL_SIZE,     8 },
+};
+
+static const FGLConfigPair configAttributes2[] = {
+	{ EGL_BUFFER_SIZE,     16 },
+	{ EGL_ALPHA_SIZE,       0 },
+	{ EGL_BLUE_SIZE,        5 },
+	{ EGL_GREEN_SIZE,       6 },
+	{ EGL_RED_SIZE,         5 },
+	{ EGL_DEPTH_SIZE,      24 },
+	{ EGL_STENCIL_SIZE,     0 },
+};
+
+static const FGLConfigPair configAttributes3[] = {
+	{ EGL_BUFFER_SIZE,     16 },
+	{ EGL_ALPHA_SIZE,       0 },
+	{ EGL_BLUE_SIZE,        5 },
+	{ EGL_GREEN_SIZE,       6 },
+	{ EGL_RED_SIZE,         5 },
 	{ EGL_DEPTH_SIZE,      24 },
 	{ EGL_STENCIL_SIZE,     8 },
 };
 
 /* RGB 888 configs */
-static const FGLConfigPair configAttributes2[] = {
+static const FGLConfigPair configAttributes4[] = {
 	{ EGL_BUFFER_SIZE,     32 },
 	{ EGL_ALPHA_SIZE,       0 },
 	{ EGL_BLUE_SIZE,        8 },
@@ -96,7 +116,27 @@ static const FGLConfigPair configAttributes2[] = {
 	{ EGL_STENCIL_SIZE,     0 },
 };
 
-static const FGLConfigPair configAttributes3[] = {
+static const FGLConfigPair configAttributes5[] = {
+	{ EGL_BUFFER_SIZE,     32 },
+	{ EGL_ALPHA_SIZE,       0 },
+	{ EGL_BLUE_SIZE,        8 },
+	{ EGL_GREEN_SIZE,       8 },
+	{ EGL_RED_SIZE,         8 },
+	{ EGL_DEPTH_SIZE,       0 },
+	{ EGL_STENCIL_SIZE,     8 },
+};
+
+static const FGLConfigPair configAttributes6[] = {
+	{ EGL_BUFFER_SIZE,     32 },
+	{ EGL_ALPHA_SIZE,       0 },
+	{ EGL_BLUE_SIZE,        8 },
+	{ EGL_GREEN_SIZE,       8 },
+	{ EGL_RED_SIZE,         8 },
+	{ EGL_DEPTH_SIZE,      24 },
+	{ EGL_STENCIL_SIZE,     0 },
+};
+
+static const FGLConfigPair configAttributes7[] = {
 	{ EGL_BUFFER_SIZE,     32 },
 	{ EGL_ALPHA_SIZE,       0 },
 	{ EGL_BLUE_SIZE,        8 },
@@ -107,7 +147,7 @@ static const FGLConfigPair configAttributes3[] = {
 };
 
 /* ARGB 8888 configs */
-static const FGLConfigPair configAttributes4[] = {
+static const FGLConfigPair configAttributes8[] = {
 	{ EGL_BUFFER_SIZE,     32 },
 	{ EGL_ALPHA_SIZE,       8 },
 	{ EGL_BLUE_SIZE,        8 },
@@ -117,27 +157,27 @@ static const FGLConfigPair configAttributes4[] = {
 	{ EGL_STENCIL_SIZE,     0 },
 };
 
-static const FGLConfigPair configAttributes5[] = {
+static const FGLConfigPair configAttributes9[] = {
+	{ EGL_BUFFER_SIZE,     32 },
+	{ EGL_ALPHA_SIZE,       8 },
+	{ EGL_BLUE_SIZE,        8 },
+	{ EGL_GREEN_SIZE,       8 },
+	{ EGL_RED_SIZE,         8 },
+	{ EGL_DEPTH_SIZE,       0 },
+	{ EGL_STENCIL_SIZE,     8 },
+};
+
+static const FGLConfigPair configAttributes10[] = {
 	{ EGL_BUFFER_SIZE,     32 },
 	{ EGL_ALPHA_SIZE,       8 },
 	{ EGL_BLUE_SIZE,        8 },
 	{ EGL_GREEN_SIZE,       8 },
 	{ EGL_RED_SIZE,         8 },
 	{ EGL_DEPTH_SIZE,      24 },
-	{ EGL_STENCIL_SIZE,     8 },
-};
-
-static const FGLConfigPair configAttributes6[] = {
-	{ EGL_BUFFER_SIZE,     32 },
-	{ EGL_ALPHA_SIZE,       8 },
-	{ EGL_BLUE_SIZE,        8 },
-	{ EGL_GREEN_SIZE,       8 },
-	{ EGL_RED_SIZE,         8 },
-	{ EGL_DEPTH_SIZE,       0 },
 	{ EGL_STENCIL_SIZE,     0 },
 };
 
-static const FGLConfigPair configAttributes7[] = {
+static const FGLConfigPair configAttributes11[] = {
 	{ EGL_BUFFER_SIZE,     32 },
 	{ EGL_ALPHA_SIZE,       8 },
 	{ EGL_BLUE_SIZE,        8 },
@@ -148,14 +188,18 @@ static const FGLConfigPair configAttributes7[] = {
 };
 
 const FGLConfigs gPlatformConfigs[] = {
-	{ configAttributes0, NELEM(configAttributes0) },
-	{ configAttributes1, NELEM(configAttributes1) },
-	{ configAttributes2, NELEM(configAttributes2) },
-	{ configAttributes3, NELEM(configAttributes3) },
-	{ configAttributes4, NELEM(configAttributes4) },
-	{ configAttributes5, NELEM(configAttributes5) },
-	{ configAttributes6, NELEM(configAttributes6) },
-	{ configAttributes7, NELEM(configAttributes7) },
+	{ configAttributes0, NELEM(configAttributes0)   },
+	{ configAttributes1, NELEM(configAttributes1)   },
+	{ configAttributes2, NELEM(configAttributes2)   },
+	{ configAttributes3, NELEM(configAttributes3)   },
+	{ configAttributes4, NELEM(configAttributes4)   },
+	{ configAttributes5, NELEM(configAttributes5)   },
+	{ configAttributes6, NELEM(configAttributes6)   },
+	{ configAttributes7, NELEM(configAttributes7)   },
+	{ configAttributes8, NELEM(configAttributes8)   },
+	{ configAttributes9, NELEM(configAttributes9)   },
+	{ configAttributes10, NELEM(configAttributes10) },
+	{ configAttributes11, NELEM(configAttributes11) },
 };
 
 const int gPlatformConfigsNum = NELEM(gPlatformConfigs);
@@ -268,36 +312,7 @@ int FGLFramebufferManager::get(void)
  * Frame buffer window surface
  */
 
-struct FGLWindowSurface : public FGLRenderSurface {
-	FGLWindowSurface(EGLDisplay dpy, EGLConfig config,
-			int32_t depthFormat, int fileDesc, int32_t pixelFormat);
-	~FGLWindowSurface();
-
-	virtual EGLBoolean swapBuffers();
-	virtual EGLBoolean connect();
-	virtual void disconnect();
-
-	virtual bool initCheck() const
-	{
-		return vbase != NULL;
-	}
-
-	virtual EGLint getWidth() const
-	{
-		return width;
-	}
-
-	virtual EGLint getHeight() const
-	{
-		return height;
-	}
-
-	virtual EGLint getSwapBehavior() const
-	{
-		return EGL_BUFFER_DESTROYED;
-	}
-
-private:
+class FGLWindowSurface : public FGLRenderSurface {
 	int	bytesPerPixel;
 	int	fd;
 	int	bufferCount;
@@ -309,147 +324,229 @@ private:
 	unsigned long	lineLength;
 
 	FGLFramebufferManager *manager;
-};
 
-FGLWindowSurface::FGLWindowSurface(EGLDisplay dpy, EGLConfig config,
-		int32_t depthFormat, int fileDesc, int32_t pixelFormat) :
-	FGLRenderSurface(dpy, config, pixelFormat, depthFormat),
-	bytesPerPixel(0), fd(fileDesc)
-{
-	fb_var_screeninfo vinfo;
-	fb_fix_screeninfo finfo;
+public:
+	FGLWindowSurface(EGLDisplay dpy, uint32_t config,
+				uint32_t pixelFormat, uint32_t depthFormat,
+				int fileDesc) :
+		FGLRenderSurface(dpy, config, pixelFormat, depthFormat),
+		bytesPerPixel(0),
+		fd(fileDesc)
+	{
+		fb_var_screeninfo vinfo;
+		fb_fix_screeninfo finfo;
 
-	ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
-	ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
+		ioctl(fd, FBIOGET_VSCREENINFO, &vinfo);
+		ioctl(fd, FBIOGET_FSCREENINFO, &finfo);
 
-	stride		= vinfo.xres;
-	width		= vinfo.xres;
-	height		= vinfo.yres;
-	bytesPerPixel	= vinfo.bits_per_pixel / 8;
-	bufferCount	= 2;
-	pbase		= finfo.smem_start;
-	lineLength	= finfo.line_length;
+		width		= vinfo.xres;
+		height		= vinfo.yres;
+		bytesPerPixel	= vinfo.bits_per_pixel / 8;
+		bufferCount	= 2;
+		pbase		= finfo.smem_start;
+		lineLength	= finfo.line_length;
 
-	vinfo.yres_virtual = 2*vinfo.yres;
-	if (ioctl(fd, FBIOPUT_VSCREENINFO, &vinfo) < 0) {
-		vinfo.yres_virtual = vinfo.yres;
-		bufferCount = 1;
-		LOGW("FBIOPUT_VSCREENINFO failed, page flipping not supported");
+		vinfo.yres_virtual = 2*vinfo.yres;
+		if (ioctl(fd, FBIOPUT_VSCREENINFO, &vinfo) < 0) {
+			vinfo.yres_virtual = vinfo.yres;
+			bufferCount = 1;
+			LOGW("FBIOPUT_VSCREENINFO failed, page flipping not supported");
+		}
+
+		unsigned long fbSize = vinfo.yres_virtual * finfo.line_length;
+		unsigned long pageSize = getpagesize();
+		vlen = (fbSize + pageSize - 1) & ~(pageSize - 1);
+
+		vbase = mmap(NULL, vlen, PROT_READ|PROT_WRITE,
+							MAP_SHARED, fd, 0);
+		if (vbase == MAP_FAILED) {
+			vbase = 0;
+			LOGE("mmap failed");
+			setError(EGL_BAD_ALLOC);
+			return;
+		}
+
+		manager = new FGLFramebufferManager(fd, bufferCount, height); 
 	}
 
-	unsigned long fbSize = vinfo.yres_virtual * finfo.line_length;
-	unsigned long pageSize = getpagesize();
-	vlen = (fbSize + pageSize - 1) & ~(pageSize - 1);
-
-	vbase = mmap(NULL, vlen, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	if (vbase == MAP_FAILED) {
-		vbase = 0;
-		LOGE("mmap failed");
-		setError(EGL_BAD_ALLOC);
-		return;
+	~FGLWindowSurface()
+	{
+		if (vbase != NULL)
+			munmap(vbase, vlen);
+		delete manager;
+		delete color;
+		delete depth;
 	}
 
-	manager = new FGLFramebufferManager(fd, bufferCount, height); 
-}
+	virtual bool swapBuffers()
+	{
+		FGLSurface *newColor;
+		int newYOffset;
 
-FGLWindowSurface::~FGLWindowSurface()
-{
-	if (vbase != NULL)
-		munmap(vbase, vlen);
-	delete manager;
-	delete color;
-	delete depth;
-}
+		if (bufferCount < 2) {
+			setError(EGL_BAD_ACCESS);
+			return false;
+		}
 
-EGLBoolean FGLWindowSurface::connect()
-{
-	if (depthFormat) {
-		unsigned int size = stride * height * 4;
+		newYOffset = manager->get();
+		if (newYOffset < 0) {
+			setError(EGL_BAD_ALLOC);
+			return false;
+		}
+
+		unsigned long phys = pbase + newYOffset*lineLength;
+		char *virt = (char *)vbase + newYOffset*lineLength;
+		unsigned int size = height*lineLength;
+		newColor = new FGLFramebufferSurface(phys, virt, size);
+		if (!newColor || !newColor->isValid()) {
+			delete newColor;
+			newColor = 0;
+			manager->put(newYOffset);
+			setError(EGL_BAD_ALLOC);
+			return false;
+		}
+
+		if (color) {
+			manager->put(yoffset);
+			delete color;
+		}
+
+		color = newColor;
+		yoffset = newYOffset;
+
+		return true;
+	}
+
+	virtual bool connect()
+	{
+		if (depthFormat) {
+			unsigned int size = width * height * 4;
+
+			delete depth;
+			depth = new FGLLocalSurface(size);
+			if (!depth || !depth->isValid()) {
+				setError(EGL_BAD_ALLOC);
+				return false;
+			}
+		}
+
+		if (color) {
+			manager->put(yoffset);
+			delete color;
+			color = 0;
+		}
+
+		yoffset = manager->get();
+		if (yoffset < 0) {
+			setError(EGL_BAD_ALLOC);
+			return false;
+		}
+
+		unsigned long phys = pbase + yoffset*lineLength;
+		char *virt = (char *)vbase + yoffset*lineLength;
+		unsigned int size = height*lineLength;
+		color = new FGLFramebufferSurface(phys, virt, size);
+		if (!color || !color->isValid()) {
+			delete color;
+			color = 0;
+			manager->put(yoffset);
+			setError(EGL_BAD_ALLOC);
+			return false;
+		}
+
+		return true;
+	}
+
+	virtual void disconnect()
+	{
+		if (color) {
+			manager->put(yoffset);
+			delete color;
+			color = 0;
+		}
 
 		delete depth;
-		depth = new FGLLocalSurface(size);
-		if (!depth || !depth->isValid()) {
-			setError(EGL_BAD_ALLOC);
-			return EGL_FALSE;
-		}
+		depth = 0;
 	}
 
-	if (color) {
-		manager->put(yoffset);
-		delete color;
-		color = 0;
+	virtual bool initCheck() const
+	{
+		return vbase != NULL;
 	}
 
-	yoffset = manager->get();
-	if (yoffset < 0) {
-		setError(EGL_BAD_ALLOC);
-		return EGL_FALSE;
+	virtual EGLint getSwapBehavior() const
+	{
+		return EGL_BUFFER_DESTROYED;
 	}
+};
 
-	color = new FGLFramebufferSurface(pbase + yoffset*lineLength,
-			(char *)vbase + yoffset*lineLength, height*lineLength);
-	if (!color->isValid()) {
-		delete color;
-		color = 0;
-		manager->put(yoffset);
-		setError(EGL_BAD_ALLOC);
-		return EGL_FALSE;
-	}
+static uint32_t framebufferFormats32bpp[] = {
+	FGL_PIXFMT_XRGB8888,
+	FGL_PIXFMT_ARGB8888,
+	FGL_PIXFMT_XBGR8888,
+	FGL_PIXFMT_ABGR8888
+};
 
-	return EGL_TRUE;
-}
+static uint32_t framebufferFormats16bpp[] = {
+	FGL_PIXFMT_XRGB1555,
+	FGL_PIXFMT_RGB565,
+	FGL_PIXFMT_ARGB4444,
+	FGL_PIXFMT_ARGB1555
+};
 
-void FGLWindowSurface::disconnect()
+static bool fglFindCompatiblePixelFormat(const fb_var_screeninfo *vinfo,
+		uint32_t *fglFormat, const uint32_t *formats, uint32_t count)
 {
-	if (color) {
-		manager->put(yoffset);
-		delete color;
-		color = 0;
+	while (count--) {
+		uint32_t fmt = *(formats++);
+		const FGLPixelFormat *pix = FGLPixelFormat::get(fmt);
+
+		if (vinfo->red.offset != pix->comp[FGL_COMP_RED].pos)
+			continue;
+		if (vinfo->red.length != pix->comp[FGL_COMP_RED].size)
+			continue;
+		if (vinfo->green.offset != pix->comp[FGL_COMP_GREEN].pos)
+			continue;
+		if (vinfo->green.length != pix->comp[FGL_COMP_GREEN].size)
+			continue;
+		if (vinfo->blue.offset != pix->comp[FGL_COMP_BLUE].pos)
+			continue;
+		if (vinfo->blue.length != pix->comp[FGL_COMP_BLUE].size)
+			continue;
+		if (vinfo->transp.offset != pix->comp[FGL_COMP_ALPHA].pos)
+			continue;
+		if (vinfo->transp.length != pix->comp[FGL_COMP_ALPHA].size)
+			continue;
+
+		*fglFormat = fmt;
+		return true;
 	}
 
-	delete depth;
-	depth = 0;
+	return false;
 }
 
-EGLBoolean FGLWindowSurface::swapBuffers()
+static bool fglNativeToFGLPixelFormat(const fb_var_screeninfo *vinfo,
+							uint32_t *fglFormat)
 {
-	FGLSurface *newColor;
-	int newYOffset;
-
-	if (bufferCount < 2) {
-		setError(EGL_BAD_ACCESS);
-		return EGL_FALSE;
+	switch(vinfo->bits_per_pixel) {
+	case 32:
+		return fglFindCompatiblePixelFormat(vinfo,
+					fglFormat, framebufferFormats32bpp,
+					NELEM(framebufferFormats32bpp));
+	case 16:
+		return fglFindCompatiblePixelFormat(vinfo,
+					fglFormat, framebufferFormats16bpp,
+					NELEM(framebufferFormats16bpp));
+	default:
+		break;
 	}
 
-	newYOffset = manager->get();
-	if (newYOffset < 0) {
-		setError(EGL_BAD_ALLOC);
-		return EGL_FALSE;
-	}
-
-	newColor = new FGLFramebufferSurface(pbase + newYOffset*lineLength,
-			(char *)vbase + newYOffset*lineLength, height*lineLength);
-	if (!newColor->isValid()) {
-		delete newColor;
-		newColor = 0;
-		manager->put(newYOffset);
-		setError(EGL_BAD_ALLOC);
-		return EGL_FALSE;
-	}
-
-	if (color) {
-		manager->put(yoffset);
-		delete color;
-	}
-
-	color = newColor;
-	yoffset = newYOffset;
-
-	return EGL_TRUE;
+	return false;
 }
 
-FGLRenderSurface *platformCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-	int32_t depthFormat, EGLNativeWindowType window, int32_t pixelFormat)
+FGLRenderSurface *platformCreateWindowSurface(EGLDisplay dpy,
+		uint32_t config, uint32_t pixelFormat, uint32_t depthFormat,
+		EGLNativeWindowType window)
 {
 	fb_var_screeninfo vinfo;
 	int fd = (int)window;
@@ -460,19 +557,17 @@ FGLRenderSurface *platformCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		return NULL;
 	}
 
-	FGLPixelFormat fmt;
-	fmt.bpp		= vinfo.bits_per_pixel;
-	fmt.red		= vinfo.red.length;
-	fmt.green	= vinfo.green.length;
-	fmt.blue	= vinfo.blue.length;
-	fmt.alpha	= vinfo.transp.length;
-
-	if (fglEGLValidatePixelFormat(config, &fmt) != EGL_TRUE) {
+	if (!fglNativeToFGLPixelFormat(&vinfo, &pixelFormat)) {
 		setError(EGL_BAD_MATCH);
 		return NULL;
 	}
 
-	return new FGLWindowSurface(dpy, config, depthFormat, fd, pixelFormat);
+	if (!fglEGLValidatePixelFormat(config, pixelFormat)) {
+		setError(EGL_BAD_MATCH);
+		return NULL;
+	}
+
+	return new FGLWindowSurface(dpy, config, pixelFormat, depthFormat, fd);
 }
 
 #define EGLFunc	__eglMustCastToProperFunctionPointerType

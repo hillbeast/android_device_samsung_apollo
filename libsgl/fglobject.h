@@ -1,4 +1,4 @@
-/**
+/*
  * libsgl/fglobject.h
  *
  * SAMSUNG S3C6410 FIMG-3DSE (PROPER) OPENGL ES IMPLEMENTATION
@@ -22,132 +22,196 @@
 #ifndef _LIBSGL_FGLOBJECT_
 #define _LIBSGL_FGLOBJECT_
 
-#include <cassert>
+template<typename T1, typename T2>
+class FGLObject;
+
+template<typename T1, typename T2>
+class FGLObjectBindingIterator;
 
 /*
  * FGLObjectBinding
  *
- * A binding object that can be bound to a single binding point object.
+ * An object that allows a single object of type T1 to be bound to an object
+ * of type T2 using appropriate FGLObject object.
  */
-
-template<typename T>
-class FGLObject;
-
-template<typename T>
+template<typename T1, typename T2>
 class FGLObjectBinding {
-	FGLObject<T> *object;
-	FGLObjectBinding<T> *next;
-	FGLObjectBinding<T> *prev;
+	T2 *parent;
+	FGLObject<T1, T2> *object;
+	FGLObjectBinding<T1, T2> *next;
+	FGLObjectBinding<T1, T2> *prev;
 
 public:
-	FGLObjectBinding() :
-		object(0) {};
+	FGLObjectBinding(T2 *parent = 0) :
+		parent(parent),
+		object(0),
+		next(this),
+		prev(this) {};
+
+	~FGLObjectBinding()
+	{
+		bind(0);
+	}
 
 	inline bool isBound(void)
 	{
-		return object != NULL;
+		return object != 0;
 	}
 
-	inline void unbind(void)
+	inline void bind(FGLObject<T1, T2> *o)
 	{
-		if (!object)
-			return;
-
-		object->unbind(this);
+		if (object)
+			object->unbind(this);
+		if (o)
+			o->bind(this);
 	}
 
-	inline void bind(FGLObject<T> *o)
+	inline T1* get(void)
 	{
-		o->bind(this);
+		T1 *ptr = 0;
+		if (object)
+			ptr = object->get();
+		return ptr;
 	}
 
-	inline T* get(void)
+	inline T2* getParent(void)
 	{
-		if (!object)
-			return 0;
-
-		return &object->object;
+		return parent;
 	}
 
-	inline unsigned int getName(void)
-	{
-		return object->name;
-	}
-
-	friend class FGLObject<T>;
+	friend class FGLObject<T1, T2>;
+	friend class FGLObjectBindingIterator<T1, T2>;
 };
 
 /*
- * FGLObjectBindingPoint
+ * FGLObjectBindingIterator
  *
- * A binding point object to which unlimited amount of binding objects
- * can be bound.
+ * An object that allows to access all objects of type T2, to which
+ * a given object of type T1 is bound using its FGLObject object.
  */
-template<typename T>
-class FGLObject {
-	FGLObjectBinding<T> *list;
-	unsigned int name;
+template<typename T1, typename T2>
+class FGLObjectBindingIterator {
+	FGLObject<T1, T2> *object;
+	FGLObjectBinding<T1, T2> *ptr;
 
 public:
-	T object;
+	T2 *get(void)
+	{
+		return ptr->getParent();
+	}
 
-	FGLObject(unsigned int id) :
-		list(NULL), name(id), object() {};
+	FGLObjectBindingIterator<T1, T2> &operator++(void)
+	{
+		if (ptr != &object->sentinel)
+			ptr = ptr->next;
+
+		return *this;
+	}
+
+	FGLObjectBindingIterator<T1, T2> &operator++(int)
+	{
+		FGLObjectBindingIterator<T1, T2> copy = *this;
+
+		if (ptr != &object->sentinel)
+			ptr = ptr->next;
+
+		return copy;
+	}
+
+	bool operator==(const FGLObjectBindingIterator<T1, T2> &op)
+	{
+		return ptr == op.ptr;
+	}
+
+	bool operator!=(const FGLObjectBindingIterator<T1, T2> &op)
+	{
+		return ptr != op.ptr;
+	}
+
+	FGLObjectBindingIterator(FGLObject<T1, T2> *o,
+						FGLObjectBinding<T1, T2> *p) :
+		object(o), ptr(p) {}
+};
+
+/*
+ * FGLObject
+ *
+ * An object that allows a single object of type T1 to be bound to multiple
+ * objects of type T2 using appropriate FGLObjectBinding objects.
+ */
+template<typename T1, typename T2>
+class FGLObject {
+	FGLObjectBinding<T1, T2> sentinel;
+	T1 *parent;
+
+public:
+	FGLObject(T1 *parent = 0) :
+		parent(parent) {};
 
 	~FGLObject()
 	{
 		unbindAll();
 	}
 
+	inline T1 *get(void)
+	{
+		return parent;
+	}
+
 	inline void unbindAll(void)
 	{
-		FGLObjectBinding<T> *b = list;
+		FGLObjectBinding<T1, T2> *b = sentinel.next;
 
-		while(b) {
-			b->object = NULL;
+		while(b != &sentinel) {
+			b->object = 0;
 			b = b->next;
 		}
 
-		list = NULL;
+		sentinel.next = sentinel.prev = &sentinel;
 	}
 
-	inline void unbind(FGLObjectBinding<T> *b)
+	inline void unbind(FGLObjectBinding<T1, T2> *b)
 	{
 		if (!isBound(b))
 			return;
 
-		if (b->next)
-			b->next->prev = b->prev;
+		b->next->prev = b->prev;
+		b->prev->next = b->next;
 
-		if (b->prev)
-			b->prev->next = b->next;
-		else
-			list = b->next;
-
-		b->object = NULL;
+		b->object = 0;
 	}
 
-	inline void bind(FGLObjectBinding<T> *b)
+	inline void bind(FGLObjectBinding<T1, T2> *b)
 	{
-		if(b->isBound())
-			b->unbind();
+		b->bind(0);
 
-		b->next = list;
-		b->prev = NULL;
+		b->next = sentinel.next;
+		b->prev = &sentinel;
+		sentinel.next->prev = b;
+		sentinel.next = b;
 
-		if(list)
-			list->prev = b;
-
-		list = b;
 		b->object = this;
 	}
 
-	inline bool isBound(FGLObjectBinding<T> *b)
+	inline bool isBound(FGLObjectBinding<T1, T2> *b)
 	{
 		return b->object == this;
 	}
 
-	friend class FGLObjectBinding<T>;
+	inline FGLObjectBindingIterator<T1, T2> begin(void)
+	{
+		return FGLObjectBindingIterator<T1, T2>(this, sentinel.next);
+	}
+
+	inline FGLObjectBindingIterator<T1, T2> end(void)
+	{
+		return FGLObjectBindingIterator<T1, T2>(this, &sentinel);
+	}
+
+	friend class FGLObjectBinding<T1, T2>;
+	friend class FGLObjectBindingIterator<T1, T2>;
+
+	typedef FGLObjectBindingIterator<T1, T2> iterator;
 };
 
 #endif

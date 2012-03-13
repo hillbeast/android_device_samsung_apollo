@@ -14,18 +14,18 @@ static const unsigned int frag_header[] = {
 
 static const unsigned int frag_texture0[] = {
 	0x00000000, 0x0001e407, 0x107821e4, 0x00000000,
-	0x00000000, 0x05000000, 0x188001e4, 0x00000000,
-	0x00000000, 0x01010000, 0x00f8211b, 0x00000000,
 	0x00000000, 0x02040000, 0x00f822e4, 0x00000000,
 	0x00000000, 0x02050000, 0x00f823e4, 0x00000000,
 };
 
 static const unsigned int frag_texture1[] = {
 	0x01000000, 0x0002e407, 0x107821e4, 0x00000000,
-	0x00000000, 0x05010000, 0x188001e4, 0x00000000,
-	0x00000000, 0x01010000, 0x00f8211b, 0x00000000,
 	0x00000000, 0x02060000, 0x00f822e4, 0x00000000,
 	0x00000000, 0x02070000, 0x00f823e4, 0x00000000,
+};
+
+static const unsigned int frag_tex_swap[] = {
+	0x00000000, 0x01010000, 0x00f821c6, 0x00000000,
 };
 
 static const unsigned int frag_replace[] = {
@@ -58,15 +58,15 @@ static const unsigned int frag_combine[] = {
 };
 
 static const unsigned int frag_combine_col[] = {
-	0x03000000, 0x0104e401, 0x033a20e4, 0x00000000,
+	0x03000000, 0x0104e401, 0x033820e4, 0x00000000,
 };
 
 static const unsigned int frag_combine_a[] = {
-	0x03000000, 0x0104e401, 0x034220e4, 0x00000000,
+	0x03000000, 0x0104e401, 0x034020e4, 0x00000000,
 };
 
 static const unsigned int frag_combine_uni[] = {
-	0x03000000, 0x0104e401, 0x037a20e4, 0x00000000,
+	0x03000000, 0x0104e401, 0x037820e4, 0x00000000,
 };
 
 static const unsigned int frag_combine_arg0tex[] = {
@@ -179,9 +179,9 @@ static const unsigned int frag_combine_adds[] = {
 };
 
 static const unsigned int frag_combine_interpolate[] = {
-	0x06000000, 0x0104e401, 0x037824e4, 0x00000000,
+	0x06000000, 0x0104e401, 0x037827e4, 0x00000000,
 	0x06000000, 0x0201e441, 0x227826e4, 0x00000000,
-	0x06e40104, 0x0105e401, 0x0ef824e4, 0x00000000,
+	0x06e40107, 0x0105e401, 0x0ef824e4, 0x00000000,
 };
 
 static const unsigned int frag_combine_subtract[] = {
@@ -195,14 +195,12 @@ static const unsigned int frag_combine_dot3[] = {
 	0x03000000, 0x0104e402, 0x037824e4, 0x00000000,
 };
 
-static const unsigned int frag_footer[] = {
-	0x00000000, 0x01000000, 0x00f810e4, 0x00000000,
-	0x00000000, 0x00000000, 0x1e000000, 0x00000000,
+static const unsigned int frag_out_swap[] = {
+	0x00000000, 0x01000000, 0x00f820c6, 0x00000000,
 };
 
-static const unsigned int frag_clear[] = {
-	0x00000000, 0x02ff0000, 0x00fa10e4, 0x00000000,
-	0x00000000, 0x00000000, 0x1e000000, 0x00000000,
+static const unsigned int frag_footer[] = {
+	0x00000000, 0x01000000, 0x00fa10e4, 0x00000000,
 };
 
 #endif

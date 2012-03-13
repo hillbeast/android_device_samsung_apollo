@@ -616,7 +616,7 @@ status_t AudioHardware::setIncallPath_l(uint32_t device)
 
 struct pcm *AudioHardware::openPcmOut_l()
 {
-    LOGD("openPcmOut_l() mPcmOpenCnt: %d", mPcmOpenCnt);
+    //LOGD("openPcmOut_l() mPcmOpenCnt: %d", mPcmOpenCnt);
     if (mPcmOpenCnt++ == 0) {
         if (mPcm != NULL) {
             LOGE("openPcmOut_l() mPcmOpenCnt == 0 and mPcm == %p\n", mPcm);
@@ -938,7 +938,7 @@ AudioHardware::AudioStreamOutALSA::~AudioStreamOutALSA()
 
 ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t bytes)
 {
-    LOGD("AudioStreamOutALSA::write(%p, %u)", buffer, bytes);
+    //LOGD("AudioStreamOutALSA::write(%p, %u)", buffer, bytes);
     status_t status = NO_INIT;
     const uint8_t* p = static_cast<const uint8_t*>(buffer);
     int ret;
@@ -952,7 +952,7 @@ ssize_t AudioHardware::AudioStreamOutALSA::write(const void* buffer, size_t byte
         if (mStandby) {
             AutoMutex hwLock(mHardware->lock());
 
-            LOGD("AudioStreamOutALSA::write: AudioHardware pcm playback is exiting standby.");
+            //LOGD("AudioStreamOutALSA::write: AudioHardware pcm playback is exiting standby.");
             acquire_wake_lock (PARTIAL_WAKE_LOCK, "AudioOutLock");
 
             sp<AudioStreamInALSA> spIn = mHardware->getActiveInput_l();
@@ -1061,7 +1061,7 @@ void AudioHardware::AudioStreamOutALSA::close_l()
 
 status_t AudioHardware::AudioStreamOutALSA::open_l()
 {
-    LOGD("open pcm_out driver");
+    //LOGD("open pcm_out driver");
     mPcm = mHardware->openPcmOut_l();
     if (mPcm == NULL) {
         return NO_INIT;
@@ -1069,7 +1069,7 @@ status_t AudioHardware::AudioStreamOutALSA::open_l()
 
     mMixer = mHardware->openMixer_l();
     if (mMixer) {
-        LOGD("open playback normal");
+        //LOGD("open playback normal");
 
         mRouteCtl = mixer_get_control(mMixer, "Idle Mode", 0);
         LOGE_IF(mRouteCtl == NULL, "open_l() could not get mixer ctl");
@@ -1082,7 +1082,7 @@ status_t AudioHardware::AudioStreamOutALSA::open_l()
     }
     if (mHardware->mode() != AudioSystem::MODE_IN_CALL) {
         const char *route = mHardware->getOutputRouteFromDevice(mDevices);
-        LOGD("write() wakeup setting route %s", route);
+        //LOGD("write() wakeup setting route %s", route);
         if (mRouteCtl) {
             TRACE_DRIVER_IN(DRV_MIXER_SEL)
             mixer_ctl_select(mRouteCtl, route);
@@ -2055,3 +2055,4 @@ extern "C" AudioHardwareInterface* createAudioHardware(void) {
 }
 
 }; // namespace android_audio_legacy
+

@@ -295,14 +295,19 @@ enum {
 	FGTU_VTSTA_MOD_CLAMP
 };
 
+enum {
+	FGTU_TEX_RGBA	= (1 << 0),
+	FGTU_TEX_BGR	= (1 << 1)
+};
+
 struct _fimgTexture;
 typedef struct _fimgTexture fimgTexture;
 
 /* Functions */
 fimgTexture *fimgCreateTexture(void);
 void fimgDestroyTexture(fimgTexture *texture);
-void fimgInitTexture(fimgTexture *texture, unsigned int format,
-			unsigned int maxLevel, unsigned long addr);
+void fimgInitTexture(fimgTexture *texture, unsigned int flags,
+				unsigned int format, unsigned long addr);
 void fimgSetTexMipmapOffset(fimgTexture *texture, unsigned int level,
 						unsigned int offset);
 unsigned int fimgGetTexMipmapOffset(fimgTexture *texture, unsigned level);
@@ -310,7 +315,7 @@ void fimgSetupTexture(fimgContext *ctx, fimgTexture *texture, unsigned unit);
 void fimgSetTexMipmapLevel(fimgTexture *texture, int level);
 void fimgSetTexBaseAddr(fimgTexture *texture, unsigned int addr);
 void fimgSetTex2DSize(fimgTexture *texture,
-	unsigned int uSize, unsigned int vSize);
+		unsigned int uSize, unsigned int vSize, unsigned int maxLevel);
 void fimgSetTex3DSize(fimgTexture *texture, unsigned int vSize,
 				unsigned int uSize, unsigned int pSize);
 void fimgSetTexUAddrMode(fimgTexture *texture, unsigned mode);
@@ -338,7 +343,8 @@ typedef enum {
 #define FGFP_MATRIX_TEXTURE(i)	(FGFP_MATRIX_TEXTURE + (i))
 
 typedef enum {
-	FGFP_TEXFUNC_REPLACE = 0,
+	FGFP_TEXFUNC_NONE = 0,
+	FGFP_TEXFUNC_REPLACE,
 	FGFP_TEXFUNC_MODULATE,
 	FGFP_TEXFUNC_DECAL,
 	FGFP_TEXFUNC_BLEND,
@@ -375,7 +381,6 @@ void fimgLoadMatrix(fimgContext *ctx, unsigned int matrix, const float *pData);
 void fimgEnableTexture(fimgContext *ctx, unsigned int unit);
 void fimgDisableTexture(fimgContext *ctx, unsigned int unit);
 void fimgCompatLoadPixelShader(fimgContext *ctx);
-void fimgCompatSetTextureEnable(fimgContext *ctx, unsigned unit, int enable);
 void fimgCompatSetTextureFunc(fimgContext *ctx, unsigned unit, fimgTexFunc func);
 void fimgCompatSetColorCombiner(fimgContext *ctx, unsigned unit,
 							fimgCombFunc func);
@@ -393,8 +398,7 @@ void fimgCompatSetColorScale(fimgContext *ctx, unsigned unit, float scale);
 void fimgCompatSetAlphaScale(fimgContext *ctx, unsigned unit, float scale);
 void fimgCompatSetEnvColor(fimgContext *ctx, unsigned unit,
 					float r, float g, float b, float a);
-void fimgCompatSetupTexture(fimgContext *ctx, fimgTexture *tex,
-						uint32_t unit, int swap);
+void fimgCompatSetupTexture(fimgContext *ctx, fimgTexture *tex, uint32_t unit);
 
 #endif
 
@@ -414,7 +418,7 @@ typedef enum {
 	FGPF_TEST_MODE_NOTEQUAL
 } fimgTestMode;
 
-/**
+/*
  *	WORKAROUND
  *	Inconsistent with fimgTestMode due to hardware bug
  */
@@ -494,6 +498,10 @@ typedef enum {
 	FGPF_COLOR_MODE_8888
 } fimgColorMode;
 
+enum {
+	FGPF_COLOR_MODE_BGR = (1 << 1)
+};
+
 /* Functions */
 void fimgSetScissorParams(fimgContext *ctx,
 			  unsigned int xMax, unsigned int xMin,
@@ -527,16 +535,15 @@ void fimgSetDitherEnable(fimgContext *ctx, int enable);
 void fimgSetLogicalOpParams(fimgContext *ctx, fimgLogicalOperation alpha,
 			    fimgLogicalOperation color);
 void fimgSetLogicalOpEnable(fimgContext *ctx, int enable);
-void fimgSetColorBufWriteMask(fimgContext *ctx, int r, int g, int b, int a);
+void fimgSetColorBufWriteMask(fimgContext *ctx, unsigned int mask);
 void fimgSetStencilBufWriteMask(fimgContext *ctx, int back, unsigned char mask);
 void fimgSetZBufWriteMask(fimgContext *ctx, int enable);
 void fimgSetFrameBufParams(fimgContext *ctx,
-			   int opaqueAlpha, unsigned int thresholdAlpha,
-			   unsigned int constAlpha, fimgColorMode format);
+				unsigned int flags, unsigned int format);
 void fimgSetZBufBaseAddr(fimgContext *ctx, unsigned int addr);
 void fimgSetColorBufBaseAddr(fimgContext *ctx, unsigned int addr);
 void fimgSetFrameBufSize(fimgContext *ctx,
-				unsigned int width, unsigned int height);
+			unsigned int width, unsigned int height, int flipY);
 
 enum {
 	FIMG_SCISSOR_TEST,

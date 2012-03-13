@@ -24,6 +24,7 @@
 
 #include <pthread.h>
 #include "common.h"
+#include "fglpixelformat.h"
 
 struct FGLRenderSurface;
 
@@ -42,16 +43,6 @@ struct FGLExtensionMap {
 	__eglMustCastToProperFunctionPointerType address;
 };
 
-struct FGLPixelFormat {
-	int bpp;
-	int red;
-	int green;
-	int blue;
-	int alpha;
-
-	FGLPixelFormat() : bpp(0), red(0), green(0), blue(0), alpha(0) {}
-};
-
 #define EGL_ERR_DEBUG
 
 #ifdef EGL_ERR_DEBUG
@@ -62,8 +53,14 @@ struct FGLPixelFormat {
 #define setError fglEGLSetError
 #endif
 
+#define FGL_DISPLAY_MAGIC	0x444c4746 /* FGLD */
+
+static inline bool fglEGLValidateDisplay(EGLDisplay dpy)
+{
+	return (uint32_t)dpy == FGL_DISPLAY_MAGIC;
+}
+
 extern void fglEGLSetError(EGLint error);
-extern EGLBoolean fglEGLValidateDisplay(EGLDisplay dpy);
 
 extern const FGLConfigs gPlatformConfigs[];
 extern const int gPlatformConfigsNum;
@@ -71,10 +68,9 @@ extern const int gPlatformConfigsNum;
 extern const FGLExtensionMap gPlatformExtensionMap[];
 
 extern FGLRenderSurface *platformCreateWindowSurface(EGLDisplay dpy,
-	EGLConfig config, int32_t depthFormat, EGLNativeWindowType window,
-	int32_t pixelFormat);
+			uint32_t config, uint32_t pixelFormat,
+			uint32_t depthFormat, EGLNativeWindowType window);
 
-extern EGLBoolean fglEGLValidatePixelFormat(EGLConfig config,
-							FGLPixelFormat *fmt);
+extern bool fglEGLValidatePixelFormat(uint32_t config, uint32_t fmt);
 
 #endif
