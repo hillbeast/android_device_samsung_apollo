@@ -77,7 +77,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 
 PRODUCT_COPY_FILES += \
-        vendor/cm/prebuilt/common/etc/apns-conf.xml:system/etc/apns-conf.xml \
+        vendor/aokp/prebuilt/common/etc/apns-conf.xml:system/etc/apns-conf.xml \
         device/samsung/apollo/prebuilt/etc/media_profiles.xml:system/etc/media_profiles.xml \
         device/samsung/apollo/prebuilt/etc/asound.conf:system/etc/asound.conf \
         device/samsung/apollo/prebuilt/etc/dhcpcd.conf:system/etc/dhcpcd.conf \
@@ -150,8 +150,8 @@ PRODUCT_COPY_FILES += \
     	packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
 
 
-$(call inherit-product, vendor/cm/config/common_full_phone.mk)
-$(call inherit-product, vendor/cm/config/gsm.mk)
+$(call inherit-product, vendor/aokp/configs/common_phone.mk)
+$(call inherit-product, vendor/aokp/configs/gsm.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 $(call inherit-product, device/common/gps/gps_eu_supl.mk)

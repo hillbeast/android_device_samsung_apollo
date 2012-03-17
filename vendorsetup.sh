@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-add_lunch_combo cm_apollo-userdebug
+add_lunch_combo aokp_apollo-userdebug
