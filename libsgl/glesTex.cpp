@@ -177,7 +177,6 @@ static int fglGetFormatInfo(GLenum format, GLenum type, bool *conv)
 
 static void fglGenerateMipmaps(FGLTexture *obj)
 {
- FUNCTION_TRACER;
 	int level = 0;
 	int skip = 1;
 
@@ -371,7 +370,6 @@ static size_t fglCalculateMipmaps(FGLTexture *obj, unsigned int width,
 static void fglLoadTextureDirect(FGLTexture *obj, unsigned level,
 						const GLvoid *pixels)
 {
- FUNCTION_TRACER;
 	const FGLPixelFormat *pix = FGLPixelFormat::get(obj->pixFormat);
 	unsigned offset = pix->pixelSize*fimgGetTexMipmapOffset(obj->fimg, level);
 
@@ -391,7 +389,6 @@ static void fglLoadTextureDirect(FGLTexture *obj, unsigned level,
 static void fglLoadTexture(FGLTexture *obj, unsigned level,
 		    const GLvoid *pixels, unsigned alignment)
 {
- FUNCTION_TRACER;
 	const FGLPixelFormat *pix = FGLPixelFormat::get(obj->pixFormat);
 	unsigned offset = pix->pixelSize*fimgGetTexMipmapOffset(obj->fimg, level);
 
@@ -428,7 +425,6 @@ static inline uint16_t fglPackAL88(uint8_t l, uint8_t a)
 static void fglConvertTexture(FGLTexture *obj, unsigned level,
 			const GLvoid *pixels, unsigned alignment)
 {
- FUNCTION_TRACER;
 	const FGLPixelFormat *pix = FGLPixelFormat::get(obj->pixFormat);
 	unsigned offset = pix->pixelSize*fimgGetTexMipmapOffset(obj->fimg, level);
 
@@ -497,7 +493,7 @@ static void fglConvertTexture(FGLTexture *obj, unsigned level,
 		do {
 			unsigned x = width;
 			do {
-				*(dst16++) = fglPackAL88(0, *(src8++));
+				*(dst16++) = fglPackAL88(0xff, *(src8++));
 			} while (--x);
 			src8 += padding;
 		} while (--height);
@@ -523,8 +519,7 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 	GLint internalformat, GLsizei width, GLsizei height, GLint border,
 	GLenum format, GLenum type, const GLvoid *pixels)
 {
- FUNCTION_TRACER;
-	// Check conditions required by specification
+	/* Check conditions required by specification */
 	if (target != GL_TEXTURE_2D) {
 		setError(GL_INVALID_ENUM);
 		return;
@@ -546,10 +541,9 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 	}
 
 	FGLContext *ctx = getContext();
-	FGLTexture *obj =
-		ctx->texture[ctx->activeTexture].getTexture();
+	FGLTexture *obj = ctx->texture[ctx->activeTexture].getTexture();
 
-	// Specifying mipmaps
+	/* Mipmap image specification */
 	if (level > 0) {
 		if (obj->eglImage) {
 			/* TODO: Copy eglImage contents into new texture */
@@ -568,29 +562,30 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 			mipmapH = 1;
 
 		if (!obj->surface) {
-			// Mipmaps can be specified only if the texture exists
+			/* Mipmaps can be specified only if base level exists */
 			setError(GL_INVALID_OPERATION);
 			return;
 		}
 
-		// Check dimensions
+		/* Check dimensions */
 		if (mipmapW != width || mipmapH != height) {
-			// Invalid size
+			/* Invalid size */
 			setError(GL_INVALID_VALUE);
 			return;
 		}
 
-		// Check format
+		/* Check format */
 		if (obj->format != format || obj->type != type) {
-			// Must be the same format as level 0
+			/* Must be the same format as base level */
 			setError(GL_INVALID_ENUM);
 			return;
 		}
 
-		// Copy the image (with conversion if needed)
+		/* Copy the image (with conversion if needed) */
 		if (pixels != NULL) {
 			const FGLPixelFormat *pix =
 					FGLPixelFormat::get(obj->pixFormat);
+
 			fglWaitForTexture(ctx, obj);
 
 			if (obj->convert) {
@@ -610,9 +605,7 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 		return;
 	}
 
-	// level == 0
-
-	// Get format information
+	/* Base image specification */
 	bool convert;
 	int pixFormat = fglGetFormatInfo(format, type, &convert);
 	if (pixFormat < 0) {
@@ -650,7 +643,7 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 		return;
 	}
 
-	// Calculate mipmaps
+	/* Calculate mipmaps */
 	uint32_t size = pix->pixelSize*fglCalculateMipmaps(obj,
 						width, height, pix->pixelSize);
 
@@ -662,9 +655,8 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 		}
 	}
 
-	// (Re)allocate the texture
+	/* (Re)allocate the texture if needed */
 	if (!obj->surface) {
-		// Setup surface
 		obj->surface = new FGLLocalSurface(size);
 		if(!obj->surface || !obj->surface->isValid()) {
 			delete obj->surface;
@@ -683,7 +675,7 @@ GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level,
 					pix->texFormat, obj->surface->paddr);
 	fimgSetTex2DSize(obj->fimg, width, height, obj->maxLevel);
 
-	// Copy the image (with conversion if needed)
+	/* Copy the image (with conversion if needed) */
 	if (pixels != NULL) {
 		if (obj->convert) {
 			fglConvertTexture(obj, level, pixels,
@@ -707,7 +699,6 @@ static void fglLoadTexturePartial(FGLTexture *obj, unsigned level,
 			const GLvoid *pixels, unsigned alignment,
 			unsigned x, unsigned y, unsigned w, unsigned h)
 {
- FUNCTION_TRACER;
 	const FGLPixelFormat *pix = FGLPixelFormat::get(obj->pixFormat);
 	unsigned offset = pix->pixelSize*fimgGetTexMipmapOffset(obj->fimg, level);
 
@@ -737,7 +728,6 @@ static void fglConvertTexturePartial(FGLTexture *obj, unsigned level,
 			const GLvoid *pixels, unsigned alignment,
 			unsigned x, unsigned y, unsigned w, unsigned h)
 {
- FUNCTION_TRACER;
 	const FGLPixelFormat *pix = FGLPixelFormat::get(obj->pixFormat);
 	unsigned offset = pix->pixelSize*fimgGetTexMipmapOffset(obj->fimg, level);
 
@@ -831,7 +821,7 @@ static void fglConvertTexturePartial(FGLTexture *obj, unsigned level,
 		do {
 			unsigned x = w;
 			do {
-				*(dst16++) = fglPackAL88(0, *(src8++));
+				*(dst16++) = fglPackAL88(0xff, *(src8++));
 			} while (--x);
 			src8 += srcPad;
 			dst16 += dstPad;
@@ -848,7 +838,6 @@ GL_API void GL_APIENTRY glTexSubImage2D (GLenum target, GLint level,
 		GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
 		GLenum format, GLenum type, const GLvoid *pixels)
 {
- FUNCTION_TRACER;
 	if (target != GL_TEXTURE_2D) {
 		setError(GL_INVALID_ENUM);
 		return;
@@ -1007,6 +996,20 @@ GL_API void GL_APIENTRY glEGLImageTargetRenderbufferStorageOES (GLenum target, G
 	FUNC_UNIMPLEMENTED;
 }
 #endif
+
+GL_API void GL_APIENTRY glActiveTexture (GLenum texture)
+{
+	GLint unit;
+
+	if((unit = unitFromTextureEnum(texture)) < 0) {
+		setError(GL_INVALID_ENUM);
+		return;
+	}
+
+	FGLContext *ctx = getContext();
+
+	ctx->activeTexture = unit;
+}
 
 GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param)
 {

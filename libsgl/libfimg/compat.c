@@ -433,6 +433,7 @@ enum fimgOpcodeType {
 	OP_TYPE_MOVE
 };
 
+#ifndef FIMG_BYPASS_SHADER_OPTIMIZER
 static fimgOpcodeInfo opcodeMap[64] = {
 	[OP_NOP] = {
 		.type		= OP_TYPE_RESERVED,
@@ -651,6 +652,7 @@ static fimgOpcodeInfo opcodeMap[64] = {
 		.srcCount	= 0,
 	}
 };
+#endif
 
 enum fimgSrcRegType {
 	REG_SRC_V = 0,
@@ -692,6 +694,12 @@ struct registerMap {
 
 #define SWIZZLE(a, b, c, d)	((a) | ((b) << 2) | ((c) << 4) | ((d) << 6))
 
+#ifdef FIMG_BYPASS_SHADER_OPTIMIZER
+static inline uint32_t optimizeShader(uint32_t *start, uint32_t *end)
+{
+	return (end - start) / 4;
+}
+#else
 static inline uint8_t mergeSwizzle(uint8_t a, uint8_t b)
 {
 	uint8_t swizzle = 0;
@@ -722,13 +730,7 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 
 	/* State initialization */
 	memset(deps, 0, sizeof(deps));
-	for (reg = 0; reg < 32; ++reg) {
-		map[reg].srcReg = reg;
-		map[reg].srcRegType = 1;
-		map[reg].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-		map[reg].movInstr = 0;
-		map[reg].flags = 0;
-	}
+	memset(map, 0, sizeof(map));
 
 	/* Optimization pass */
 	for (instr = instrStart; instr < instrEnd; ++instr) {
@@ -762,15 +764,8 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 				&& map[instr->src0_regnum].flags
 				&& map[instr->src0_regnum].srcRegType != REG_SRC_R
 				&& map[instr->src0_regnum].srcRegType == instr->src1_regtype
-			) {
-				if (map[instr->src0_regnum].srcRegType == REG_SRC_R)
-					deps[map[instr->src0_regnum].srcRegNum] &= ~(1 << instr->src0_regnum);
-
-				map[instr->src0_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[instr->src0_regnum].srcRegType = REG_SRC_R;
-				map[instr->src0_regnum].srcRegNum = instr->src0_regnum;
+			)
 				map[instr->src0_regnum].flags = 0;
-			}
 
 			if (instr->src0_regtype == REG_SRC_R
 				&& map[instr->src0_regnum].flags
@@ -790,15 +785,8 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 				&& map[instr->src1_regnum].flags
 				&& map[instr->src1_regnum].srcRegType != REG_SRC_R
 				&& map[instr->src1_regnum].srcRegType == instr->src0_regtype
-			) {
-				if (map[instr->src1_regnum].srcRegType == REG_SRC_R)
-					deps[map[instr->src1_regnum].srcRegNum] &= ~(1 << instr->src1_regnum);
-
-				map[instr->src1_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[instr->src1_regnum].srcRegType = REG_SRC_R;
-				map[instr->src1_regnum].srcRegNum = instr->src1_regnum;
+			)
 				map[instr->src1_regnum].flags = 0;
-			}
 
 			if (instr->src1_regtype == REG_SRC_R
 				&& map[instr->src1_regnum].flags
@@ -821,15 +809,8 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 				&& map[instr->src0_regnum].srcRegType != REG_SRC_R
 				&& (map[instr->src0_regnum].srcRegType == instr->src1_regtype
 				|| map[instr->src0_regnum].srcRegType == instr->src2_regtype)
-			) {
-				if (map[instr->src0_regnum].srcRegType == REG_SRC_R)
-					deps[map[instr->src0_regnum].srcRegNum] &= ~(1 << instr->src0_regnum);
-
-				map[instr->src0_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[instr->src0_regnum].srcRegType = REG_SRC_R;
-				map[instr->src0_regnum].srcRegNum = instr->src0_regnum;
+			)
 				map[instr->src0_regnum].flags = 0;
-			}
 
 			if (instr->src0_regtype == REG_SRC_R
 			    && map[instr->src0_regnum].flags) {
@@ -849,15 +830,8 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 				&& map[instr->src1_regnum].srcRegType != REG_SRC_R
 				&& (map[instr->src1_regnum].srcRegType == instr->src0_regtype
 				|| map[instr->src1_regnum].srcRegType == instr->src2_regtype)
-			) {
-				if (map[instr->src1_regnum].srcRegType == REG_SRC_R)
-					deps[map[instr->src1_regnum].srcRegNum] &= ~(1 << instr->src1_regnum);
-
-				map[instr->src1_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[instr->src1_regnum].srcRegType = REG_SRC_R;
-				map[instr->src1_regnum].srcRegNum = instr->src1_regnum;
+			)
 				map[instr->src1_regnum].flags = 0;
-			}
 
 			if (instr->src1_regtype == REG_SRC_R
 			    && map[instr->src1_regnum].flags) {
@@ -877,15 +851,8 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 				&& map[instr->src2_regnum].srcRegType != REG_SRC_R
 				&& (map[instr->src2_regnum].srcRegType == instr->src0_regtype
 				|| map[instr->src2_regnum].srcRegType == instr->src1_regtype)
-			) {
-				if (map[instr->src2_regnum].srcRegType == REG_SRC_R)
-					deps[map[instr->src2_regnum].srcRegNum] &= ~(1 << instr->src2_regnum);
-
-				map[instr->src2_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[instr->src2_regnum].srcRegType = REG_SRC_R;
-				map[instr->src2_regnum].srcRegNum = instr->src2_regnum;
+			)
 				map[instr->src2_regnum].flags = 0;
-			}
 
 			if (instr->src2_regtype == REG_SRC_R
 			    && map[instr->src2_regnum].flags) {
@@ -913,21 +880,14 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 			if (map[instr->dest_regnum].srcRegType == REG_SRC_R)
 				deps[map[instr->dest_regnum].srcRegNum] &= ~(1 << instr->dest_regnum);
 
-			map[instr->dest_regnum].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-			map[instr->dest_regnum].srcRegType = REG_SRC_R;
-			map[instr->dest_regnum].srcRegNum = instr->dest_regnum;
 			map[instr->dest_regnum].flags = 0;
 		}
 
 		depMask = deps[instr->dest_regnum];
 		depReg = 0;
 		while (depMask) {
-			if (depMask & 1) {
-				map[depReg].srcSwizzle = SWIZZLE(0, 1, 2, 3);
-				map[depReg].srcRegType = REG_SRC_R;
-				map[depReg].srcRegNum = depReg;
+			if (depMask & 1)
 				map[depReg].flags |= MAP_FLAG_INVALID;
-			}
 			depMask >>= 1;
 			++depReg;
 		}
@@ -970,6 +930,7 @@ static uint32_t optimizeShader(uint32_t *start, uint32_t *end)
 
 	return instrPtr - instrStart;
 }
+#endif
 
 /*
  * Shader generation code
@@ -1095,9 +1056,9 @@ void fimgCompatBuildPixelShader(fimgContext *ctx, uint32_t slot)
 
 		for (arg = 0; arg < 3; arg++) {
 			addr += loadShaderBlock(&combineArg[arg]
-					[FGFP_BITFIELD_GET_IDX(reg, TEX_COMBA_SRC, arg) + 2], addr);
+					[FGFP_BITFIELD_GET_IDX(reg, TEX_COMBA_SRC, arg)], addr);
 			addr += loadShaderBlock(&combineArgMod[arg]
-					[FGFP_BITFIELD_GET_IDX(reg, TEX_COMBA_MOD, arg) + 2], addr);
+					[FGFP_BITFIELD_GET_IDX(reg, TEX_COMBA_MOD, arg) | 0x2], addr);
 		}
 
 		addr += loadShaderBlock(&combineFunc[FGFP_BITFIELD_GET(reg, TEX_COMBA_FUNC)],
@@ -1191,7 +1152,7 @@ void fimgCompatSetColorCombineArgMod(fimgContext *ctx, uint32_t unit,
 void fimgCompatSetAlphaCombineArgSrc(fimgContext *ctx, uint32_t unit,
 					uint32_t arg, fimgCombArgSrc src)
 {
-	FGFP_BITFIELD_SET_IDX(ctx->compat.psState.tex[unit], TEX_COMBA_SRC, arg, src & 1);
+	FGFP_BITFIELD_SET_IDX(ctx->compat.psState.tex[unit], TEX_COMBA_SRC, arg, src);
 }
 
 void fimgCompatSetAlphaCombineArgMod(fimgContext *ctx, uint32_t unit,

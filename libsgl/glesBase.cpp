@@ -650,7 +650,12 @@ GL_API void GL_APIENTRY glShadeModel (GLenum mode)
 	case GL_FLAT:
 		fimgSetShadingMode(ctx->fimg, 1, FGL_ARRAY_COLOR);
 		break;
+	default:
+		setError(GL_INVALID_ENUM);
+		return;
 	}
+
+	ctx->rasterizer.shadeModel = mode;
 }
 
 static inline void fglSetupMatrices(FGLContext *ctx)
@@ -699,31 +704,33 @@ static inline void fglSetupTextures(FGLContext *ctx)
 	int i = FGL_MAX_TEXTURE_UNITS - 1;
 
 	do {
-		FGLTexture *tex;
-		bool enabled = ctx->textureExternal[i].enabled;
-		if (enabled) {
-			tex = ctx->textureExternal[i].getTexture();
-		} else {
-			tex = ctx->texture[i].getTexture();
-			enabled = ctx->texture[i].enabled;
-		}
+		FGLTexture *tex = 0;
 
-		if(enabled && tex->surface && tex->isComplete()) {
-			/* Texture is ready */
-			if (tex->dirty) {
-				tex->surface->flush();
-				tex->dirty = false;
-				flush = true;
-			}
-			fimgCompatSetupTexture(ctx->fimg, tex->fimg, i);
-			fimgCompatSetTextureFunc(ctx->fimg,
-						i, ctx->texture[i].fglFunc);
-			ctx->busyTexture[i] = tex;
-		} else {
+		if (ctx->textureExternal[i].enabled)
+			tex = ctx->textureExternal[i].getTexture();
+
+		if (!tex && ctx->texture[i].enabled)
+			tex = ctx->texture[i].getTexture();
+
+		if (!tex || !tex->isComplete()) {
 			/* Texture is not ready */
 			fimgCompatSetTextureFunc(ctx->fimg,
 							i, FGFP_TEXFUNC_NONE);
+			continue;
 		}
+
+		/* Texture is ready */
+		if (tex->dirty) {
+			tex->surface->flush();
+			tex->dirty = false;
+			flush = true;
+		}
+
+		fimgCompatSetupTexture(ctx->fimg, tex->fimg, i);
+		fimgCompatSetTextureFunc(ctx->fimg,
+					i, ctx->texture[i].fglFunc);
+
+		ctx->busyTexture[i] = tex;
 	} while (i--);
 
 	if (flush)
@@ -1050,7 +1057,7 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 		return;
 	}
 
-	// Save current state and prepare to drawing
+	/* Save current state and prepare to drawing */
 
 	GLint viewportX = ctx->viewport.x;
 	GLint viewportY = ctx->viewport.y;
@@ -1092,19 +1099,19 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 		zD = zNear + z*(zFar - zNear);
 
 	vertices[ 0] = x;
-	vertices[ 1] = y;
+	vertices[ 1] = y + height;
 	vertices[ 2] = zD;
 	vertices[ 3] = x + width;
-	vertices[ 4] = y;
+	vertices[ 4] = y + height;
 	vertices[ 5] = zD;
-	vertices[ 6] = x + width;
-	vertices[ 7] = y + height;
+	vertices[ 6] = x;
+	vertices[ 7] = y;
 	vertices[ 8] = zD;
-	vertices[ 9] = x;
-	vertices[10] = y + height;
+	vertices[ 9] = x + width;
+	vertices[10] = y;
 	vertices[11] = zD;
 
-	// Proceed with drawing
+	/* Proceed with drawing */
 
 	fimgArray arrays[4 + FGL_MAX_TEXTURE_UNITS];
 
@@ -1113,7 +1120,8 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 	arrays[FGL_ARRAY_VERTEX].width		= 12;
 	fimgSetAttribute(ctx->fimg, FGL_ARRAY_VERTEX, FGHI_ATTRIB_DT_FLOAT, 3);
 
-	for (int i = FGL_ARRAY_NORMAL; i < FGL_ARRAY_TEXTURE; i++) {
+	for (int i = FGL_ARRAY_NORMAL;
+	     i < FGL_ARRAY_TEXTURE + FGL_MAX_TEXTURE_UNITS; i++) {
 		arrays[i].pointer	= &ctx->vertex[i];
 		arrays[i].stride	= 0;
 		arrays[i].width		= 16;
@@ -1122,34 +1130,37 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 	for (int i = 0; i < FGL_MAX_TEXTURE_UNITS; i++) {
 		FGLTexture *tex;
 		bool enabled = ctx->textureExternal[i].enabled;
-		if (enabled) {
+
+		if (enabled)
 			tex = ctx->textureExternal[i].getTexture();
-		} else {
+
+		if (!enabled) {
 			tex = ctx->texture[i].getTexture();
 			enabled = ctx->texture[i].enabled;
 		}
-		if (enabled && tex->isComplete()) {
-			if (!tex->invReady) {
-				tex->invWidth = 1.0f/tex->width;
-				tex->invHeight = 1.0f/tex->height;
-				tex->invReady = true;
-			}
-			texcoords[i][0]	= tex->invWidth*tex->cropRect[0];
-			texcoords[i][1] = tex->invHeight*(tex->cropRect[1]);
-			texcoords[i][2] = tex->invWidth*(tex->cropRect[0] + tex->cropRect[2]);
-			texcoords[i][3] = tex->invHeight*(tex->cropRect[1]);
-			texcoords[i][4] = tex->invWidth*(tex->cropRect[0] + tex->cropRect[2]);
-			texcoords[i][5] = tex->invHeight*(tex->cropRect[1] + tex->cropRect[3]);
-			texcoords[i][6] = tex->invWidth*tex->cropRect[0];
-			texcoords[i][7] = tex->invHeight*(tex->cropRect[1] + tex->cropRect[3]);
-			arrays[FGL_ARRAY_TEXTURE(i)].stride = 8;
-		} else {
-			texcoords[i][0] = 0;
-			texcoords[i][1] = 0;
-			arrays[FGL_ARRAY_TEXTURE(i)].stride = 0;
+
+		if (!enabled || !tex->isComplete())
+			continue;
+
+		if (!tex->invReady) {
+			tex->invWidth = 1.0f/tex->width;
+			tex->invHeight = 1.0f/tex->height;
+			tex->invReady = true;
 		}
+
+		texcoords[i][ 0] = tex->invWidth*tex->cropRect[0];
+		texcoords[i][ 1] = tex->invHeight*(tex->cropRect[1] + tex->cropRect[3]);
+		texcoords[i][ 2] = tex->invWidth*(tex->cropRect[0] + tex->cropRect[2]);
+		texcoords[i][ 3] = tex->invHeight*(tex->cropRect[1] + tex->cropRect[3]);
+		texcoords[i][ 4] = tex->invWidth*tex->cropRect[0];
+		texcoords[i][ 5] = tex->invHeight*(tex->cropRect[1]);
+		texcoords[i][ 6] = tex->invWidth*(tex->cropRect[0] + tex->cropRect[2]);
+		texcoords[i][ 7] = tex->invHeight*tex->cropRect[1];
+
 		arrays[FGL_ARRAY_TEXTURE(i)].pointer	= texcoords[i];
+		arrays[FGL_ARRAY_TEXTURE(i)].stride	= 8;
 		arrays[FGL_ARRAY_TEXTURE(i)].width	= 8;
+
 		fimgSetAttribute(ctx->fimg, FGL_ARRAY_TEXTURE(i), FGHI_ATTRIB_DT_FLOAT, 2);
 	}
 
@@ -1159,9 +1170,9 @@ GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat 
 
 	ctx->finished = false;
 
-	fimgDrawArrays(ctx->fimg, FGPE_TRIANGLE_FAN, arrays, 4);
+	fimgDrawArrays(ctx->fimg, FGPE_TRIANGLE_STRIP, arrays, 4);
 
-	// Restore previous state
+	/* Restore previous state */
 
 	for (int i = 0; i < 4 + FGL_MAX_TEXTURE_UNITS; i++) {
 		if (arrayEnabled[i])
@@ -1915,6 +1926,11 @@ static inline void fglSet(GLenum cap, bool state)
 	case GL_LIGHT6:
 	case GL_LIGHT7:
 	case GL_NORMALIZE:
+	case GL_COLOR_MATERIAL:
+	case GL_FOG:
+	case GL_POINT_SMOOTH:
+	case GL_LINE_SMOOTH:
+	case GL_MULTISAMPLE:
 		break;
 	default:
 		LOGD("Unimplemented or unsupported enum %d in %s", cap, __func__);
