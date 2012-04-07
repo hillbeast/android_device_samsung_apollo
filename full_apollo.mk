@@ -57,7 +57,7 @@ PRODUCT_PACKAGES := \
 
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.sf.lcd_density=130 \
+    ro.sf.lcd_density=120 \
     wifi.interface=eth0 \
     ro.telephony.ril_class=SamsungRIL \
     phone.ril.classname = com.android.internal.telephony.SamsungRIL \
@@ -72,8 +72,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.checkjni=false \
     ro.ril.enable.managed.roaming=1 \
     ro.ril.oem.nosim.ecclist=911,112,999,000,08,118,120,122,110,119,995 \
-    ro.ril.emc.mode=2
-
+    ro.ril.emc.mode=2 \
+    ro.opengles.version= 65537
 
 
 PRODUCT_COPY_FILES += \
