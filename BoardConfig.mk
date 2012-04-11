@@ -26,8 +26,6 @@ TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
 BOARD_EGL_CFG := device/samsung/apollo/prebuilt/graphics/egl.cfg
 
 # Sensors
-TARGET_USES_OLD_LIBSENSORS_HAL := true
-TARGET_SENSORS_NO_OPEN_CHECK := true
 BOARD_USES_GPSSHIM := true
 BOARD_GPS_LIBRARIES := libsecgps libsecril-client
 TARGET_BOOTLOADER_BOARD_NAME := s5p6442
