@@ -24,6 +24,7 @@ TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
 
 TARGET_KERNEL_SOURCE := kernel/samsung/apollo
 TARGET_KERNEL_CONFIG := apollo_cm_defconfig
+BOARD_CUSTOM_BOOTIMG_MK := device/samsung/galaxys2/shbootimg.mk
 
 # Graphics
 BOARD_EGL_CFG := device/samsung/apollo/prebuilt/graphics/egl.cfg
@@ -42,9 +43,7 @@ BOARD_CAMERA_DEVICE := /dev/video0
 # Misc
 WITH_DEXPREOPT := false
 WITH_JIT := true
-TARGET_NO_RECOVERY := true
 TARGET_NO_BOOTLOADER := true
-TARGET_NO_KERNEL := false
 TARGET_NO_RADIOIMAGE := true
 BOARD_USE_LEGACY_TOUCHSCREEN := true
 BOARD_USES_GENERIC_AUDIO := false

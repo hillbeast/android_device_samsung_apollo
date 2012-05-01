@@ -90,7 +90,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
 
   if OPTIONS.aslr_mode:
     script.RetouchBinaries(retouch_files)
-  else
+  else:
     script.UndoRetouchBinaries(retouch_files)
 
   Item.GetMetadata(input_zip)
