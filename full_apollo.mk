@@ -22,7 +22,7 @@
 #
 
 
-PRODUCT_LOCALES += ldpi mdpi
+PRODUCT_LOCALES += mdpi
 
 PRODUCT_PACKAGE_OVERLAYS := device/samsung/apollo/overlay
 DEVICE_PACKAGE_OVERLAYS := device/samsung/apollo/overlay

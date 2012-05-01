@@ -22,6 +22,9 @@ TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH_VARIANT := armv6-vfp
 TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
 
+TARGET_KERNEL_SOURCE := kernel/samsung/apollo
+TARGET_KERNEL_CONFIG := apollo_rev_02_android_defconfig 
+
 # Graphics
 BOARD_EGL_CFG := device/samsung/apollo/prebuilt/graphics/egl.cfg
 
@@ -60,3 +63,17 @@ WIFI_DRIVER_FW_AP_PATH      := "/system/etc/wifi/bcm4329_aps.bin"
 WIFI_DRIVER_MODULE_PATH     := "/lib/modules/dhd.ko"
 WIFI_DRIVER_MODULE_ARG      := "firmware_path=/system/etc/wifi/bcm4329_sta.bin nvram_path=/system/etc/wifi/nvram_net.txt"
 WIFI_DRIVER_MODULE_NAME     := "dhd"
+
+# NAND
+TARGET_USERIMAGES_USE_EXT4 := true
+BOARD_BOOTIMAGE_PARTITION_SIZE := 8388608
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 222822400
+BOARD_USERDATAIMAGE_PARTITION_SIZE := 204996608
+BOARD_FLASH_BLOCK_SIZE := 4096
+
+# Releasetools
+TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetools/apollo_ota_from_target_files
+TARGET_RELEASETOOL_IMG_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetools/apollo_img_from_target_files
+
+# USB
+TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun%d/file"
