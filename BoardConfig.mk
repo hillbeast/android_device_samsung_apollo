@@ -23,8 +23,8 @@ TARGET_ARCH_VARIANT := armv6-vfp
 TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
 
 TARGET_KERNEL_SOURCE := kernel/samsung/apollo
-TARGET_KERNEL_CONFIG := apollo_cm_defconfig
-BOARD_CUSTOM_BOOTIMG_MK := device/samsung/galaxys2/shbootimg.mk
+TARGET_KERNEL_CONFIG := cyanogenmod_apollo_defconfig
+BOARD_CUSTOM_BOOTIMG_MK := device/samsung/apollo/shbootimg.mk
 
 # Graphics
 BOARD_EGL_CFG := device/samsung/apollo/prebuilt/graphics/egl.cfg
