@@ -32,14 +32,11 @@ class EdifyGenerator(edify_generator.EdifyGenerator):
             ('package_extract_file("busybox", "/tmp/busybox");\n'
              'set_perm(0, 0, 0777, "/tmp/busybox");'))
       self.script.append(
-            ('package_extract_file("redbend_ua", "/tmp/redbend_ua");\n'
-             'set_perm(0, 0, 0777, "/tmp/redbend_ua");'))
+            ('package_extract_file("bmlunlock", "/tmp/bmlunlock");\n'
+             'set_perm(0, 0, 0777, "/tmp/bmlunlock");'))
 
-      self.script.append('package_extract_file("zImage", "/tmp/zImage");')
+      self.script.append('package_extract_file("boot.img", "/tmp/boot.img");')
 
     def RunBackup(self, command):
       edify_generator.EdifyGenerator.RunBackup(self, command)
 
-    def RedbendUA(self, image, device):
-      self.script.append(
-          ('run_program("/tmp/redbend_ua", "restore", "' + image + '", "' + device + '");'))
