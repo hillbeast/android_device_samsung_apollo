@@ -53,6 +53,7 @@ PRODUCT_PACKAGES := \
     LiveWallpapersPicker \
     MagicSmokeWallpapers \
     VisualizationWallpapers \
+    SamsungServiceMode \
     librs_jni
 
 

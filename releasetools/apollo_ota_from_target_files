@@ -77,18 +77,14 @@ def WriteFullOTAPackage(input_zip, output_zip):
   if OPTIONS.wipe_user_data:
     script.FormatPartition("/data")
 
-  script.Print("Flashing kernel ...")
-  script.AppendExtra('run_program("/tmp/bmlunlock");')
-  script.AppendExtra('run_program("/sbin/dd","if=/tmp/boot.img","of=/dev/block/bml5");')
-
   script.Print("Formatting system ...")
   #script.FormatPartition("/system")
   script.AppendExtra('unmount("/system");')
-  script.AppendExtra('run_program("/sbin/busybox", "mke2fs", "-m", "0", "-O", "has_journal,extent,huge_file,flex_bg,uninit_bg,dir_nlink,extra_isize", "-L", "system", "-M", "/system", "/dev/block/stl6");')
+  script.AppendExtra('run_program("/sbin/busybox", "mkfs.ext2", "/dev/block/stl6");')
   script.Print("Mounting system ...")
   #script.Mount("/system")
   #script.AppendExtra('mount("ext4", "", "/dev/block/stl6", "/system");')
-  script.AppendExtra('run_program("/tmp/busybox", "mount", "-t", "ext4", "/dev/block/stl6", "/system");')
+  script.AppendExtra('run_program("/tmp/busybox", "mount", "-t", "ext2", "/dev/block/stl6", "/system");')
   script.ShowProgress(0.4, 0)
   script.Print("Unpacking system ...")
   script.UnpackPackageDir("system", "/system")
@@ -117,6 +113,11 @@ def WriteFullOTAPackage(input_zip, output_zip):
     script.AppendExtra(OPTIONS.extra_script)
 
   script.UnmountAll()
+
+  script.Print("Flashing kernel ...")
+  script.AppendExtra('run_program("/tmp/bmlunlock");')
+  script.AppendExtra('run_program("/sbin/dd","if=/tmp/boot.img","of=/dev/block/bml5");')
+
   script.AddToZip(input_zip, output_zip)
   WriteMetadata(metadata, output_zip)
 ota_from_target_files.WriteFullOTAPackage = WriteFullOTAPackage

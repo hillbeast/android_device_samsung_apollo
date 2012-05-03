@@ -23,8 +23,8 @@ import edify_generator
 
 class EdifyGenerator(edify_generator.EdifyGenerator):
     def AssertDevice(self, device):
-      self.script.append(
-            ('assert(getprop("ro.product.device") == "apollo" || getprop("ro.build.product") == "apollo" || getprop("ro.product.device") == "GT-I5800" || getprop("ro.build.product") == "GT-I5800");'))
+#      self.script.append(
+#            ('assert(getprop("ro.product.device") == "apollo" || getprop("ro.build.product") == "apollo" || getprop("ro.product.device") == "GT-I5800" || getprop("ro.build.product") == "GT-I5800");'))
       # edify_generator.EdifyGenerator.AssertDevice(self, device)
 
       self.script.append(
