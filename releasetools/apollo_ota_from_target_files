@@ -66,12 +66,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
   AppendAssertions(script, input_zip)
   device_specific.FullOTA_Assertions()
 
-  script.Print(" ")
-  script.Print("-------------------------------")
-  script.Print(" Welcome to Kyorarom Installer")
-  script.Print("-------------------------------")
-  script.Print(" ")
-
   script.ShowProgress(0.5, 0)
 
   if OPTIONS.wipe_user_data:
