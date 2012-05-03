@@ -23,13 +23,9 @@ import edify_generator
 
 class EdifyGenerator(edify_generator.EdifyGenerator):
     def AssertDevice(self, device):
-#      self.script.append(
-#            ('assert(getprop("ro.product.device") == "apollo" || getprop("ro.build.product") == "apollo" || getprop("ro.product.device") == "GT-I5800" || getprop("ro.build.product") == "GT-I5800");'))
-      # edify_generator.EdifyGenerator.AssertDevice(self, device)
-
       self.script.append(
-            ('package_extract_file("busybox", "/tmp/busybox");\n'
-             'set_perm(0, 0, 0777, "/tmp/busybox");'))
+            ('assert(getprop("ro.product.device") == "apollo" || getprop("ro.build.product") == "apollo" || getprop("ro.product.device") == "GT-I5800" || getprop("ro.build.product") == "GT-I5800");'))
+
       self.script.append(
             ('package_extract_file("bmlunlock", "/tmp/bmlunlock");\n'
              'set_perm(0, 0, 0777, "/tmp/bmlunlock");'))

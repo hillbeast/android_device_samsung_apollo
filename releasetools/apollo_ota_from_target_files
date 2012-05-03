@@ -23,8 +23,7 @@ RELEASETOOLS_DIR = os.path.abspath(os.path.join(LOCAL_DIR, '../../../build/tools
 TARGET_DIR = os.getenv('OUT')
 # There is cleaner way to do this, but doesnt work for me, so need to set this manually - sorry! 
 KERNEL_DIR =  os.path.abspath(os.path.join(LOCAL_DIR, '../../../out/target/product/apollo/'))
-UTILITIES_DIR = os.path.abspath(os.path.join(LOCAL_DIR, '../../../out/target/product/apollo/utilities/'))
-PROP_UTILS_DIR = os.path.abspath(os.path.join(LOCAL_DIR, '../../../vendor/samsung/apollo/proprietary/bin/'))
+UTILITIES_DIR = os.path.abspath(os.path.join(LOCAL_DIR, '../../../out/target/product/apollo/system/bin/'))
 
 # Add releasetools directory to python path
 sys.path.append(RELEASETOOLS_DIR)
@@ -84,7 +83,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.Print("Mounting system ...")
   #script.Mount("/system")
   #script.AppendExtra('mount("ext4", "", "/dev/block/stl6", "/system");')
-  script.AppendExtra('run_program("/tmp/busybox", "mount", "-t", "ext2", "/dev/block/stl6", "/system");')
+  script.AppendExtra('run_program("/sbin/busybox", "mount", "-t", "ext2", "/dev/block/stl6", "/system");')
   script.ShowProgress(0.4, 0)
   script.Print("Unpacking system ...")
   script.UnpackPackageDir("system", "/system")
@@ -103,8 +102,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.ShowProgress(0.2, 0)
 
   output_zip.write(os.path.join(KERNEL_DIR, "boot.img"),"boot.img")
-  output_zip.write(os.path.join(UTILITIES_DIR, "busybox"),"busybox")
-  output_zip.write(os.path.join(PROP_UTILS_DIR, "bmlunlock"),"bmlunlock")
+  output_zip.write(os.path.join(UTILITIES_DIR, "bmlunlock"),"bmlunlock")
 
   script.ShowProgress(0.1, 0)
   device_specific.FullOTA_InstallEnd()

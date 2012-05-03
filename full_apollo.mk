@@ -54,6 +54,7 @@ PRODUCT_PACKAGES := \
     MagicSmokeWallpapers \
     VisualizationWallpapers \
     SamsungServiceMode \
+    bmlunlock \
     librs_jni
 
 
