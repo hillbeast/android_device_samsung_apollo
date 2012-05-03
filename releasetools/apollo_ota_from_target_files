@@ -66,6 +66,12 @@ def WriteFullOTAPackage(input_zip, output_zip):
   AppendAssertions(script, input_zip)
   device_specific.FullOTA_Assertions()
 
+  script.Print(" ")
+  script.Print("-------------------------------")
+  script.Print(" Welcome to Kyorarom Installer")
+  script.Print("-------------------------------")
+  script.Print(" ")
+
   script.ShowProgress(0.5, 0)
 
   if OPTIONS.wipe_user_data:
@@ -78,7 +84,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.Print("Formatting system ...")
   #script.FormatPartition("/system")
   script.AppendExtra('unmount("/system");')
-  script.AppendExtra('run_program("/tmp/mke2fs", "-m", "0", "-O", "has_journal,extent,huge_file,flex_bg,uninit_bg,dir_nlink,extra_isize", "-L", "system", "-M", "/system", "/dev/block/stl6");')
+  script.AppendExtra('run_program("/sbin/busybox", "mke2fs", "-m", "0", "-O", "has_journal,extent,huge_file,flex_bg,uninit_bg,dir_nlink,extra_isize", "-L", "system", "-M", "/system", "/dev/block/stl6");')
   script.Print("Mounting system ...")
   #script.Mount("/system")
   #script.AppendExtra('mount("ext4", "", "/dev/block/stl6", "/system");')
@@ -101,7 +107,6 @@ def WriteFullOTAPackage(input_zip, output_zip):
   script.ShowProgress(0.2, 0)
 
   output_zip.write(os.path.join(KERNEL_DIR, "boot.img"),"boot.img")
-  output_zip.write(os.path.join(UTILITIES_DIR, "mke2fs"),"mke2fs")
   output_zip.write(os.path.join(UTILITIES_DIR, "busybox"),"busybox")
   output_zip.write(os.path.join(PROP_UTILS_DIR, "bmlunlock"),"bmlunlock")
 
