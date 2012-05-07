@@ -46,7 +46,7 @@ loglevel 3
     insmod /lib/modules/param.ko
     insmod /lib/modules/vibrator-cm6.ko
     insmod /lib/modules/Si4709_driver.ko
-    insmod /lib/modules/g3_g3d_module.ko
+    insmod /lib/modules/s3c_g3d_openfimg.ko
 
 # Create cgroup mount point for cpu accounting
     mkdir /acct
