@@ -26,11 +26,17 @@ int device_handle_key(int key_code, int visible) {
                 return HIGHLIGHT_DOWN;
             case KEY_MENU:
                 return NO_ACTION;
+/*                if (ui_get_showing_back_button()) {
+                    return SELECT_ITEM;
+                }
+                if (!get_allow_toggle_display())
+                    return GO_BACK;
+                break;*/
             case KEY_LEFTSHIFT:
             case KEY_UP:
             case KEY_VOLUMEUP:
                 return HIGHLIGHT_UP;
-            case KEY_HOMEPAGE:
+            case KEY_HOME:
                 if (ui_get_showing_back_button()) {
                     return SELECT_ITEM;
                 }
@@ -38,12 +44,6 @@ int device_handle_key(int key_code, int visible) {
                     return GO_BACK;
                 break;
             case KEY_POWER:
-                if (ui_get_showing_back_button()) {
-                    return SELECT_ITEM;
-                }
-                if (!get_allow_toggle_display())
-                    return GO_BACK;
-                break;
             case KEY_LEFTBRACE:
             case KEY_ENTER:
             case BTN_MOUSE:

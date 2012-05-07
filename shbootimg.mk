@@ -5,7 +5,7 @@ INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
 uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk.cpio
 $(uncompressed_ramdisk): $(INSTALLED_RAMDISK_TARGET)
 	zcat $< > $@
-recovery_uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.cpio
+recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.cpio
 
 $(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(recovery_ramdisk) $(INSTALLED_RAMDISK_TARGET) ${uncompressed_ramdisk} ${recovery_uncompressed_ramdisk}
 	$(call pretty,"Boot image: $@")
