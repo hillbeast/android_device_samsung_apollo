@@ -33,11 +33,6 @@ loglevel 3
 # but someday that may change.
     symlink /system/vendor /vendor
 
-    insmod /lib/modules/fsr.ko
-    insmod /lib/modules/fsr_stl.ko
-    insmod /lib/modules/rfs_glue.ko
-    insmod /lib/modules/rfs_fat.ko
-
     insmod /lib/modules/onedram.ko
     insmod /lib/modules/svnet.ko
     insmod /lib/modules/modemctl.ko
@@ -132,11 +127,11 @@ loglevel 3
 on fs
 # mount mtd partitions
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
-    mount rfs /dev/block/stl4 /efs nosuid nodev check=no
-    mount ext2 /dev/block/stl6 /system
-    mount ext2 /dev/block/stl6 /system ro remount
-    mount ext2 /dev/block/stl7 /data nosuid nodev
-    mount ext2 /dev/block/stl8 /cache nosuid nodev
+    mount EFSFS /dev/block/[EFSDEV] /efs nosuid nodev check=no
+    mount SYSTEMFS /dev/block/SYSTEMDEV /system
+    mount SYSTEMFS /dev/block/SYSTEMDEV /system ro remount
+    mount DATAFS /dev/block/DATADEV /data nosuid nodev
+    mount CACHEFS /dev/block/CACHEDEV /cache nosuid nodev
 
 on post-fs
     # once everything is setup, no need to modify /
