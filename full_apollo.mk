@@ -33,8 +33,7 @@ PRODUCT_COPY_FILES := \
 	device/samsung/apollo/init.rc:root/init.rc \
 	device/samsung/apollo/init.apollo.rc:root/init.apollo.rc \
 	device/samsung/apollo/ueventd.rc:root/ueventd.rc \
-	device/samsung/apollo/recovery.rc:recovery/root/init.rc \
-	device/samsung/apollo/recovery.fstab:recovery/root/recovery.fstab
+	device/samsung/apollo/recovery.fstab:recovery/root/etc/recovery.fstab
 
 PRODUCT_PACKAGES := \
     Camera \
