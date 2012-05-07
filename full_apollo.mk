@@ -27,6 +27,13 @@ PRODUCT_LOCALES += mdpi
 PRODUCT_PACKAGE_OVERLAYS := device/samsung/apollo/overlay
 DEVICE_PACKAGE_OVERLAYS := device/samsung/apollo/overlay
 
+# Init files
+PRODUCT_COPY_FILES := \
+	device/samsung/apollo/init.apollo.usb.rc:root/init.apollo.usb.rc \
+	device/samsung/apollo/init.rc:root/init.rc \
+	device/samsung/apollo/init.apollo.rc:root/init.apollo.rc \
+	device/samsung/apollo/ueventd.rc:root/ueventd.rc
+
 PRODUCT_PACKAGES := \
     Camera \
     Gallery \
