@@ -22,6 +22,9 @@ TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH_VARIANT := armv6-vfp
 TARGET_ARCH_VARIANT_CPU := arm1176jzf-s
 
+TARGET_PROVIDES_INIT := true
+TARGET_PROVIDES_INIT_TARGET_RC := true
+TARGET_RECOVERY_INITRC := device/samsung/apollo/recovery.rc
 TARGET_KERNEL_SOURCE := kernel/samsung/apollo
 TARGET_KERNEL_CONFIG := cyanogenmod_apollo_defconfig
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/apollo/shbootimg.mk
@@ -81,3 +84,13 @@ BOARD_CUSTOM_USB_CONTROLLER := ../../device/samsung/apollo/UsbController.cpp
 BOARD_USE_USB_MASS_STORAGE_SWITCH := true
 TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
 BOARD_UMS_LUNFILE := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
+
+# Recovery
+BOARD_CUSTOM_RECOVERY_KEYMAPPING := ../../device/samsung/apollo/recovery/recovery_keys.c
+BOARD_CUSTOM_GRAPHICS := ../../../device/samsung/apollo/recovery/graphics.c
+BOARD_HAS_NO_MISC_PARTITION := true
+BOARD_HAS_NO_SELECT_BUTTON := true
+
+# assert
+TARGET_OTA_ASSERT_DEVICE := apollo,GT-I5800,GT-I5801
+
