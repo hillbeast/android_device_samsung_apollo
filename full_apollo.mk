@@ -55,8 +55,22 @@ PRODUCT_PACKAGES := \
     VisualizationWallpapers \
     SamsungServiceMode \
     bmlunlock \
+    pm \
+    libstagefrighthw \
+    libsecjpeg \
+    libcamera \
+    libsecgps.so \
     librs_jni
 
+PRODUCT_PACKAGES += \
+    libSEC_OMX_Core.s5p6442 \
+    libOMX.SEC.AVC.Decoder.s5p6442 \
+    libOMX.SEC.M4V.Decoder.s5p6442 \
+    libOMX.SEC.AVC.Encoder.s5p6442 \
+    libOMX.SEC.M4V.Encoder.s5p6442 
+
+PRODUCT_COPY_FILES += \
+    device/samsung/apollo/sec_mm/sec_omx/sec_omx_core/secomxregistry:system/etc/secomxregistry
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.sf.lcd_density=120 \
@@ -80,6 +94,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_COPY_FILES += \
         vendor/cm/prebuilt/common/etc/apns-conf.xml:system/etc/apns-conf.xml \
+        device/samsung/apollo/pm:system/bin/pm \
         device/samsung/apollo/prebuilt/etc/media_profiles.xml:system/etc/media_profiles.xml \
         device/samsung/apollo/prebuilt/etc/asound.conf:system/etc/asound.conf \
         device/samsung/apollo/prebuilt/etc/dhcpcd.conf:system/etc/dhcpcd.conf \

@@ -52,6 +52,7 @@ BOARD_USES_LIBSECRIL_STUB := true
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
+BOARD_FORCE_STATIC_A2DP := true
 
 # Wifi
 WPA_SUPPLICANT_VERSION      := VER_0_5_X
@@ -75,4 +76,8 @@ TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetool
 TARGET_RELEASETOOL_IMG_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetools/apollo_img_from_target_files
 
 # USB
-TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun%d/file"
+RNDIS_DEVICE := "/sys/devices/virtual/sec/switch/tethering"
+BOARD_CUSTOM_USB_CONTROLLER := ../../device/samsung/apollo/UsbController.cpp
+BOARD_USE_USB_MASS_STORAGE_SWITCH := true
+TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
+BOARD_UMS_LUNFILE := "/sys/devices/platform/s3c-usbgadget/gadget/lun0/file"
