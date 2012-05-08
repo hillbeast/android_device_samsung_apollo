@@ -9,6 +9,10 @@ on init
 
     symlink /system/etc /etc
 
+    insmod /lib/modules/param.ko
+    insmod /lib/modules/onedram.ko
+    insmod /lib/modules/storage.ko
+
     mkdir /boot
     mkdir /sdcard
     mkdir /sd-ext
@@ -18,6 +22,11 @@ on init
     mkdir /data
     mkdir /cache
     mount /tmp /tmp tmpfs
+
+    mount vfat /dev/block/SDDEV /sdcard
+    mount SYSTEMFS /dev/block/SYSTEMDEV /system
+    mount DATAFS /dev/block/DATADEV /data
+    mount CACHEFS /dev/block/CACHEDEV /cache
 
 on boot
 
