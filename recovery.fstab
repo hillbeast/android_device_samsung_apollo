@@ -3,6 +3,6 @@
 /boot		bml		boot
 /cache		CACHEFS		/dev/block/CACHEDEV
 /data		DATAFS		/dev/block/DATADEV
-/mnt/sdcard	vfat		/dev/block/mmcblk0p1	/dev/block/mmcblk0
+/sdcard		vfat		/dev/block/mmcblk0p1	/dev/block/mmcblk0
 /system		SYSTEMFS	/dev/block/SYSTEMDEV
-/sdext		DATA2SDFS	/dev/block/DATA2SDDEV
+/sd-ext		DATA2SDFS	/dev/block/DATA2SDDEV

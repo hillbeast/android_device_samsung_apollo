@@ -17,16 +17,19 @@ on init
     mkdir /sdcard
     mkdir /sd-ext
     mkdir /datadata
-    mkdir /emmc
     mkdir /system
     mkdir /data
     mkdir /cache
+    mkdir /sdcard
+    mkdir /mnt
+    mkdir /mnt/sdcard
     mount /tmp /tmp tmpfs
 
     mount vfat /dev/block/SDDEV /sdcard
     mount SYSTEMFS /dev/block/SYSTEMDEV /system
     mount DATAFS /dev/block/DATADEV /data
     mount CACHEFS /dev/block/CACHEDEV /cache
+    DATA2SDMOUNTCODE
 
 on boot
 

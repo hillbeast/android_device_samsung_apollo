@@ -56,6 +56,7 @@ loglevel 3
     mkdir /cache 0771 system cache
     mkdir /config 0500 root root
     mkdir /efs
+    mkdir /sd-ext 0771 system system
 
     mkdir /mnt/sdcard 0000 system system
     symlink /mnt/sdcard /sdcard
@@ -131,10 +132,11 @@ on fs
     mount SYSTEMFS /dev/block/SYSTEMDEV /system ro remount
     mount DATAFS /dev/block/DATADEV /data nosuid nodev
     mount CACHEFS /dev/block/CACHEDEV /cache nosuid nodev
+    DATA2SDMOUNTCODE
 
 on post-fs
     # once everything is setup, no need to modify /
-    mount rootfs rootfs / ro remount
+    # mount rootfs rootfs / ro remount
 
     # We chown/chmod /cache again so because mount is run as root + defaults
     chown system cache /cache

@@ -90,6 +90,7 @@ BOARD_CUSTOM_RECOVERY_KEYMAPPING := ../../device/samsung/apollo/recovery/recover
 BOARD_CUSTOM_GRAPHICS := ../../../device/samsung/apollo/recovery/graphics.c
 BOARD_HAS_NO_MISC_PARTITION := true
 BOARD_HAS_NO_SELECT_BUTTON := true
+BOARD_LDPI_RECOVERY := true
 
 # assert
 TARGET_OTA_ASSERT_DEVICE := apollo,GT-I5800,GT-I5801
