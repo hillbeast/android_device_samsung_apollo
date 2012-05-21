@@ -56,7 +56,6 @@ loglevel 3
     mkdir /cache 0771 system cache
     mkdir /config 0500 root root
     mkdir /efs
-    mkdir /sd-ext 0771 system system
 
     mkdir /mnt/sdcard 0000 system system
     symlink /mnt/sdcard /sdcard
@@ -132,7 +131,6 @@ on fs
     mount SYSTEMFS /dev/block/SYSTEMDEV /system ro remount
     mount DATAMOUNTFS /dev/block/DATAMOUNTDEV /data nosuid nodev
     mount CACHEFS /dev/block/CACHEDEV /cache nosuid nodev
-    DATA2SDMOUNTCODE
 
 on post-fs
     # once everything is setup, no need to modify /

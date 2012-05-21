@@ -29,7 +29,6 @@ on init
     mount SYSTEMFS /dev/block/SYSTEMDEV /system
     mount DATAMOUNTFS /dev/block/DATAMOUNTDEV /data
     mount CACHEFS /dev/block/CACHEDEV /cache
-    DATA2SDMOUNTCODE
 
 on boot
 
