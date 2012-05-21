@@ -130,7 +130,7 @@ on fs
     # Mount /system rw first to give the filesystem a chance to save a checkpoint
     mount SYSTEMFS /dev/block/SYSTEMDEV /system
     mount SYSTEMFS /dev/block/SYSTEMDEV /system ro remount
-    mount DATAFS /dev/block/DATADEV /data nosuid nodev
+    mount DATAMOUNTFS /dev/block/DATAMOUNTDEV /data nosuid nodev
     mount CACHEFS /dev/block/CACHEDEV /cache nosuid nodev
     DATA2SDMOUNTCODE
 
