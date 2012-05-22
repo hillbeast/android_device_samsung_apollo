@@ -77,6 +77,7 @@ BOARD_FLASH_BLOCK_SIZE := 4096
 # Releasetools
 TARGET_RELEASETOOL_OTA_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetools/apollo_ota_from_target_files
 TARGET_RELEASETOOL_IMG_FROM_TARGET_SCRIPT := ./device/samsung/apollo/releasetools/apollo_img_from_target_files
+TARGET_OTA_ASSERT_DEVICE := apollo,GT-I5800,GT-I5801
 
 # USB
 RNDIS_DEVICE := "/sys/devices/virtual/sec/switch/tethering"
@@ -91,7 +92,5 @@ BOARD_CUSTOM_GRAPHICS := ../../../device/samsung/apollo/recovery/graphics.c
 BOARD_HAS_NO_MISC_PARTITION := true
 BOARD_HAS_NO_SELECT_BUTTON := true
 BOARD_LDPI_RECOVERY := true
-
-# assert
-TARGET_OTA_ASSERT_DEVICE := apollo,GT-I5800,GT-I5801
+DEVICE_RESOLUTION := 240x400
 
