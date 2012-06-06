@@ -752,9 +752,11 @@
     <!-- LUN file to be used by legacy USB manager.
          The existence of this file will be used to determine in the
          legacy USB manager should be started. -->
-    <string name="config_legacyUmsLunFile">/sys/devices/platform/usb_mass_storage/lun0/file</string>
+    <string name="config_legacyUmsLunFile">/sys/devices/platform/s3c-usbgadget/gadget/lun0/file</string>
 
     <!-- Workaround for devices with broken keyboards -->
     <bool name="config_forceDisableHardwareKeyboard">false</bool>
+
+    <integer name="config_deviceHardwareKeys">7</integer>
 
 </resources>
